@@ -1,14 +1,14 @@
 {
   "name": "csgo-commend-bot",
   "version": "1.0.0",
-  "description": "",
+  "description": "Simple commend bot written in JavaScript",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "author": "github.com/BeepFelix",
+  "license": "AGPL-3.0",
   "dependencies": {
     "steam": "^1.4.0",
     "steam-totp": "^2.1.0",
