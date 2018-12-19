@@ -1,7 +1,8 @@
 .vscode
 node_modules
+accounts
 accountparser.js
 doStuffWithAllAccounts.js
 manualLogin.js
-accounts
 accounts.json
+config.json
