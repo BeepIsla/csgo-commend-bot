@@ -1,0 +1,18 @@
+{
+  "name": "csgo-commend-bot",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "steam": "^1.4.0",
+    "steam-totp": "^2.1.0",
+    "steam-user": "^3.29.1",
+    "steamcommunity": "^3.38.0"
+  }
+}

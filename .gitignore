@@ -1,0 +1,7 @@
+.vscode
+node_modules
+accountparser.js
+doStuffWithAllAccounts.js
+manualLogin.js
+accounts
+accounts.json
