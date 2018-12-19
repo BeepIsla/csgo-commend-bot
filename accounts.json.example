@@ -1,0 +1,20 @@
+[
+	{
+        "username": "AccountUsername",
+        "password": "AccountPassword",
+        "sharedSecret": "OptionalSharedSecret",
+        "operational": true,
+        "lastCommend": -1,
+        "requiresSteamGuard": false,
+        "commended": []
+    },
+	{
+        "username": "AccountUsername123",
+        "password": "AccountPassword123",
+        "sharedSecret": "",
+        "operational": true,
+        "lastCommend": -1,
+        "requiresSteamGuard": false,
+        "commended": []
+    }
+]
