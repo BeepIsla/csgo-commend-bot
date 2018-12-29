@@ -18,7 +18,7 @@ This is a simple commend bot written in JavaScript, simply because its the langu
 3. Open a command prompt *inside* the folder
 4. Enter `npm install`
 5. Rename `config.json.example` to `config.json` and adjust it ([See below](#config))
-6. Rename `accounts.json.example` to `accounts.json` and fill it with accounts ([See below](#accounts))
+6. Rename `accounts.json.example` to `accounts.json` and fill it with accounts ([See below](#accounts) - To parse a `account:password` see [Account Parsing](#account-parsing))
 7. Run `node index.js`
 
 # Config
@@ -86,3 +86,6 @@ The accounts.json is an array of objects, each object has this structure:
 In order to get the Account ID use [SteamID.io](https://steamid.io/) copy the `steamID3` and remove everything before the second double point.
 
 Example: `[U:1:22202]` > `22202`
+
+# Account Parsing
+Use the `parseAccountList.js` in order to parse a list of `account:password` into a compatible format. To use this just rename your file to `input.txt` or change line 10 in the script. By default it will append all accounts to the list already present in `accounts.json`. If you want to fully override all accounts in the `accounts.json` change `AppendToFile` from `true` to `false`. To run it just enter `node parseAccountList.js`.
