@@ -10,8 +10,10 @@
 	"RateLimitedCooldown": 5400000,
 	"Chunks": {
 		"CommendsPerChunk": 100,
+		"SwitchProxyEvery": 2,
 		"TimeBetweenChunks": 60000,
 		"TimeBetweenConnectionAndSending": 2000,
 		"BeautifyDelay": 10000
-	}
+	},
+	"Proxies": []
 }

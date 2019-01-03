@@ -10,7 +10,9 @@
   "author": "github.com/BeepFelix",
   "license": "AGPL-3.0",
   "dependencies": {
+    "request": "^2.88.0",
     "steam": "^1.4.0",
+    "steam-client": "^2.5.8",
     "steam-totp": "^2.1.0",
     "steam-user": "^3.29.1",
     "steamcommunity": "^3.38.0"
