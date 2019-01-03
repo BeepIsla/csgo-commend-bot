@@ -1,17 +1,24 @@
 const Events = require("events");
 const SteamUser = require("steam-user");
 const SteamTotp = require("steam-totp");
+const Steam = require("steam-client");
 
 const GameCoordinator = require("./GameCoordinator.js");
 
 module.exports = class Account extends Events {
-	constructor(username, password, sharedSecret = undefined) {
+	constructor(username, password, sharedSecret = undefined, proxy = undefined, timeout = 60000) {
 		super();
 
 		// Self reference
 		const self = this;
 
-		this.steamUser = new SteamUser({
+		this.steamClient = new Steam.CMClient();
+
+		if (proxy) {
+			this.steamClient.setHttpProxy(proxy);
+		}
+
+		this.steamUser = new SteamUser(this.steamClient, {
 			promptSteamGuardCode: false
 		});
 		this.csgoUser = new GameCoordinator(this.steamUser);
@@ -72,7 +79,10 @@ module.exports = class Account extends Events {
 			this.steamUser.gamesPlayed([ 730 ]);
 			this.csgoUser.start();
 
-			// TODO: Add timeout incase we fail to connect to the GC
+			this._timeout = setTimeout(() => {
+				self.block = true;
+				self.emit("error", new Error("Failed to connect to GC: Timeout"));
+			}, timeout);
 		});
 
 		this.steamUser.once("error", (err) => {
@@ -85,6 +95,17 @@ module.exports = class Account extends Events {
 
 		this.csgoUser.on("debug", GC2ClientWelcome);
 		function GC2ClientWelcome(event) {
+			// We connected despite timing out, lets just ignore that
+			if (self.block === true) {
+				self.csgoUser.removeListener("debug", GC2ClientWelcome);
+				return;
+			}
+
+			// Continue as normal if we connected in time
+			if (self._timeout) {
+				clearTimeout(self._timeout);
+			}
+
 			if (event.header.msg === self.csgoUser.Protos.EGCBaseClientMsg.k_EMsgGCClientWelcome) {
 				var response = self.csgoUser.Protos.CMsgClientWelcome.decode(event.buffer);
 

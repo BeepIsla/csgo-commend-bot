@@ -46,10 +46,13 @@ This is a simple commend bot written in JavaScript, simply because its the langu
 - - Description: The time in milliseconds how long we should wait incase we hit a ratelimit. I recommend ~1 hour.
 - Chunks:
 - - CommendsPerChunk:
-- - - Type: Integer,
+- - - Type: Integer
 - - - Description: How many commends we should send per chunk
+- - SwitchProxyEvery:
+- - - Type: Integer
+- - - Description: How many chunks we process before switching proxy
 - - TimeBetweenChunks:
-- - - Type: Integer,
+- - - Type: Integer
 - - - Description: Time in milliseconds how long we should wait between each chunk
 - - TimeBetweenConnectionAndSending:
 - - - Type: Integer
@@ -57,6 +60,9 @@ This is a simple commend bot written in JavaScript, simply because its the langu
 - - BeautifyDelay:
 - - - Type: Integer
 - - - Description: Time in milliseconds between chunks and logging the message "Waiting X ms" to make it look more beautiful in the logs. Technically irrelevant.
+- Proxies:
+- - Type: Array of strings
+- - Description: Each string is the IP:Port ([See below](#proxies))
 
 # Accounts
 The accounts.json is an array of objects, each object has this structure:
@@ -89,3 +95,15 @@ Example: `[U:1:22202]` > `22202`
 
 # Account Parsing
 Use the `parseAccountList.js` in order to parse a list of `account:password` into a compatible format. To use this just rename your file to `input.txt` or change line 10 in the script. By default it will append all accounts to the list already present in `accounts.json`. If you want to fully override all accounts in the `accounts.json` change `AppendToFile` from `true` to `false` in the script at line 1. To run it just enter `node parseAccountList.js`.
+
+# Proxies
+
+## **This is untested. The public proxies I found did not work here.**
+
+Generally you do not need a proxy, if all of your login requests are successfully completed you barely get limited by steam at all, do 100 every 10 seconds and it should be fine. The only issue is when you fail to login or do not finish the login, then Steam might restrict you for up to 2 hours from logging into any account.
+
+Use an empty array (Eg: `[]`) if you do not want to use any proxies
+
+Each account in a chunk uses the same proxy, each chunk gets its own proxy, if not enough proxies are provided then the proxy-array will loop around and start back from the beginning.
+
+[HTTPS Proxies are **not** supported](https://github.com/DoctorMcKay/node-steam-client#sethttpproxyproxyurl)

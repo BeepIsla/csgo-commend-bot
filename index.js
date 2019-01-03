@@ -13,6 +13,8 @@ const colors = {
 // Add all accounts to the config
 config.accounts = require("./accounts.json");
 
+var curProxy = -1;
+var proxyChunk = 0;
 var commendsSent = 0;
 var commendsFailed = 0;
 
@@ -60,6 +62,9 @@ var hitRatelimit = false;
 			}
 		});
 
+		// Increase our proxyChunk count
+		proxyChunk++;
+
 		// If the result is "true" that means we have another one to do, if its false it means we are at the end and dont need to wait more
 		if (result === true) {
 			// Wait "BeautifyDelay" ms so the message actually appears at the bottom and not somewhere in the middle
@@ -77,7 +82,7 @@ function accountHandler(account, resolve) {
 	try {
 		console.log(colors.login + "[" + account.username + "] Logging into account");
 
-		const acc = new Account(account.username, account.password, account.sharedSecret);
+		const acc = new Account(account.username, account.password, account.sharedSecret, getProxy());
 
 		acc.on("loggedOn", () => {
 			console.log(colors.loggedIn + "[" + account.username + "] Successfully logged into account");
@@ -171,7 +176,7 @@ function accountHandler(account, resolve) {
 
 		console.error(err);
 
-		if (acc) {
+		if (typeof acc !== "undefined") {
 			acc.logout();
 		}
 
@@ -202,6 +207,26 @@ function checkComplete(resolve) {
 
 		resolve(true);
 	}
+}
+
+function getProxy() {
+	// If "config.Chunks.SwitchProxyEvery" many chunks have passed we switch to the next one
+	if (proxyChunk >= config.Chunks.SwitchProxyEvery) {
+		proxyChunk = 0;
+		curProxy += 1;
+	}
+
+	// If we are outside the array bounds go back to 0
+	if (!config.Proxies[curProxy]) {
+		curProxy = 0;
+	}
+
+	// If we are still outside the array bounds despite being at 0 then no list is defined
+	if (!config.Proxies[curProxy]) {
+		return undefined;
+	}
+
+	return config.Proxies[curProxy];
 }
 
 // Copied from: https://ourcodeworld.com/articles/read/278/how-to-split-an-array-into-chunks-of-the-same-size-easily-in-javascript
