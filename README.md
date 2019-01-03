@@ -104,6 +104,6 @@ Generally you do not need a proxy, if all of your login requests are successfull
 
 Use an empty array (Eg: `[]`) if you do not want to use any proxies
 
-Each account in a chunk uses the same proxy, each chunk gets its own proxy, if not enough proxies are provided then the proxy-array will loop around and start back from the beginning.
+`SwitchProxyEvery` in the config defines how many chunks share the same proxy.
 
 [HTTPS Proxies are **not** supported](https://github.com/DoctorMcKay/node-steam-client#sethttpproxyproxyurl)
