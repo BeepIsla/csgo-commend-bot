@@ -98,7 +98,9 @@ You can enter any of the following formats:
 - SteamID64: `"76561197960287930"` (String)
 - ProfileURL: `"https://steamcommunity.com/id/gabelogannewell/"` **OR** `"http://steamcommunity.com/profiles/76561197960287930"` (String)
 - VanityURL: `"gabelogannewell"` (String)
-- AccountID: `22202`
+- AccountID: `22202` (Number)
+
+**Don't have a SteamAPI Key? Just keep using the AccountID as a Number and it will not make a SteamAPI request**
 
 # Account Parsing
 Use the `parseAccountList.js` in order to parse a list of `account:password` into a compatible format. To use this just rename your file to `input.txt` or change line 10 in the script. By default it will append all accounts to the list already present in `accounts.json`. If you want to fully override all accounts in the `accounts.json` change `AppendToFile` from `true` to `false` in the script at line 1. To run it just enter `node parseAccountList.js`.
