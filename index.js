@@ -1,4 +1,5 @@
 const fs = require("fs");
+const SteamIDParser = require("./helpers/steamIDParser.js");
 const Account = require("./helpers/account.js");
 const config = require("./config.json");
 const colors = {
@@ -39,6 +40,22 @@ var chunkCompleteLimit = -1;
 var hitRatelimit = false;
 
 (async () => {
+	// Parse "AccountToCommend" to accountID
+	console.log(colors.general + "Parsing account from " + config.AccountToCommend);
+
+	var output = await SteamIDParser(config.AccountToCommend, config.SteamAPIKey).catch((err) => {
+		console.error(err);
+	});
+
+	// An error occured
+	if (!output) {
+		return;
+	}
+
+	config.AccountToCommend = output.accountid;
+
+	console.log(colors.general + "Successfully parsed account to " + config.AccountToCommend);
+
 	// Wait 5 seconds before starting the actual process
 	await new Promise(r => setTimeout(r, (5 * 1000)));
 

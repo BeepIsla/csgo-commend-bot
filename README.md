@@ -22,9 +22,12 @@ This is a simple commend bot written in JavaScript, simply because its the langu
 7. Run `node index.js`
 
 # Config
+- SteamAPIKey:
+- - Type: String
+- - Description: Your SteamWebAPIKey from [Steam](https://steamcommunity.com/dev/apikey)
 - AccountToCommend:
-- - Type: Integer
-- - Description: The Account ID of the Steam Account you want to commend bot ([More Details](#account-id))
+- - Type: Integer/String
+- - Description: AccountID/SteamID64/SteamID3/SteamID/ProfileLink/VanityURL ([More Details](#account-to-commend))
 - CommendsToSend:
 - - Type: Integer
 - - Description: The amount of commends we want to send to that account
@@ -88,10 +91,14 @@ The accounts.json is an array of objects, each object has this structure:
 - - Type: Array of Integers
 - - Description: A list of each user this account has already commended
 
-# Account ID
-In order to get the Account ID use [SteamID.io](https://steamid.io/) copy the `steamID3` and remove everything before the second double point.
-
-Example: `[U:1:22202]` > `22202`
+# Account To Commend
+You can enter any of the following formats:
+- SteamID: `"STEAM_0:0:11101"` (String)
+- SteamID3: `"[U:1:22202]"` (String)
+- SteamID64: `"76561197960287930"` (String)
+- ProfileURL: `"https://steamcommunity.com/id/gabelogannewell/"` **OR** `"http://steamcommunity.com/profiles/76561197960287930"` (String)
+- VanityURL: `"gabelogannewell"` (String)
+- AccountID: `22202`
 
 # Account Parsing
 Use the `parseAccountList.js` in order to parse a list of `account:password` into a compatible format. To use this just rename your file to `input.txt` or change line 10 in the script. By default it will append all accounts to the list already present in `accounts.json`. If you want to fully override all accounts in the `accounts.json` change `AppendToFile` from `true` to `false` in the script at line 1. To run it just enter `node parseAccountList.js`.
