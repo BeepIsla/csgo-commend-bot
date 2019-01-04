@@ -7,3 +7,6 @@ manualLogin.js
 accounts.json
 config.json
 turnOffSteamGuard.js
+
+checkProxy.js
+test.js

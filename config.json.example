@@ -1,5 +1,6 @@
 {
-	"AccountToCommend": 22202,
+	"SteamAPIKey": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+	"AccountToCommend": "https://steamcommunity.com/id/gabelogannewell/",
 	"CommendsToSend": 5,
 	"Commend": {
 		"Friendly": true,
