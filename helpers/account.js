@@ -122,6 +122,11 @@ module.exports = class Account extends Events {
 		const self = this;
 
 		return new Promise((resolve, reject) => {
+			if (self.block) {
+				reject("previously_timed_out");
+				return;
+			}
+
 			// Set timeout
 			var _timeout = setTimeout(() => {
 				this.csgoUser.removeListener("debug", CommendResponse);

@@ -124,8 +124,14 @@ function accountHandler(account, resolve) {
 					config.accounts[index].commended.push(config.AccountToCommend);
 				}
 
+				delete acc;
 				checkComplete(resolve);
 			}).catch((err) => {
+				// Commending while not even being connected to the GC... Makes sense
+				if (typeof err === "string" && err === "previously_timed_out") {
+					return;
+				}
+
 				commendsFailed += 1;
 
 				console.log(colors.error + "[" + account.username + "] Has encountered an error");
@@ -139,6 +145,7 @@ function accountHandler(account, resolve) {
 					config.accounts[index].commended.push(config.AccountToCommend);
 				}
 
+				delete acc;
 				checkComplete(resolve);
 			});
 		});
@@ -155,6 +162,7 @@ function accountHandler(account, resolve) {
 
 			acc.logout();
 
+			delete acc;
 			checkComplete(resolve);
 		});
 
@@ -177,6 +185,7 @@ function accountHandler(account, resolve) {
 
 			acc.logout();
 
+			delete acc;
 			checkComplete(resolve);
 		});
 	} catch(err) {
@@ -197,6 +206,7 @@ function accountHandler(account, resolve) {
 			acc.logout();
 		}
 
+		delete acc;
 		checkComplete(resolve);
 	}
 }
