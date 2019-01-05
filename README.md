@@ -19,7 +19,7 @@ This is a simple commend bot written in JavaScript, simply because its the langu
 4. Enter `npm install`
 5. Rename `config.json.example` to `config.json` and adjust it ([See below](#config))
 6. Rename `accounts.json.example` to `accounts.json` and fill it with accounts ([See below](#accounts) - To parse a `account:password` see [Account Parsing](#account-parsing))
-7. Run `node index.js`
+7. Run `node index.js` - Optionally you can use [command line arguments](#command-line-arguments)
 
 # Config
 - SteamAPIKey:
@@ -104,6 +104,23 @@ You can enter any of the following formats:
 
 # Account Parsing
 Use the `parseAccountList.js` in order to parse a list of `account:password` into a compatible format. To use this just rename your file to `input.txt` or change line 10 in the script. By default it will append all accounts to the list already present in `accounts.json`. If you want to fully override all accounts in the `accounts.json` change `AppendToFile` from `true` to `false` in the script at line 1. To run it just enter `node parseAccountList.js`.
+
+# Command Line Arguments
+You can define up to 2 command line arguments.
+
+The first one is always the SteamID you want to commend bot, it accepts any of [these](#account-to-commend) formats as long as there is no space in it.
+
+The second argument is always the amount of commends you want to send.
+
+Both are optional, if one doesn't exist the default [config](#config) value will be used.
+
+`node index.js [AccountToCommend] [CommendsToSend]`
+
+Examples:
+
+- `node index.js` - Will start the commend bot using the `config.json`
+- `node index.js gabelogannewell` - Will start the commend bot and will commend accountid `22202` with `config.json`-CommendsToSend's commends
+- `node index.js https://steamcommunity.com/id/gabelogannewell/ 10` - Will start the commend bot and will commend accountid `22202` with `10` commends
 
 # Proxies
 

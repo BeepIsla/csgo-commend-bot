@@ -11,6 +11,23 @@ const colors = {
 	error: "\x1b[31m"
 };
 
+// Shittily parse command line arguments
+if (process.argv[2]) {
+	config.AccountToCommend = process.argv[2];
+}
+
+if (process.argv[3]) {
+	try {
+		if (!isNaN(parseInt(process.argv[3]))) {
+			config.CommendsToSend = parseInt(process.argv[3]);
+		} else {
+			throw new Error("Not a number");
+		}
+	} catch(e) {
+		console.log(colors.error + "Failed to parse CommendsToSend via command line argument");
+	};
+}
+
 // Add all accounts to the config
 config.accounts = require("./accounts.json");
 
