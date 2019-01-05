@@ -124,8 +124,6 @@ Examples:
 
 # Proxies
 
-## **This is untested. The public proxies I found did not work here.**
-
 Generally you do not need a proxy, if all of your login requests are successfully completed you barely get limited by steam at all, do 100 every 10 seconds and it should be fine. The only issue is when you fail to login or do not finish the login, then Steam might restrict you for up to 2 hours from logging into any account.
 
 Use an empty array (Eg: `[]`) if you do not want to use any proxies
