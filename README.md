@@ -9,11 +9,12 @@ I will not explain a lot about those 2 side features, just follow the examples. 
 ## Report Bot:
 - The `MatchID` is optional, just leave it empty (`""`) if you do not want to use it
 - Report cooldown is 24 hours per report
+- Optional Command Line Arguments: `node index_report.js <Account> <Amount> [MatchID]`
 
 ## Server-Report Bot:
 - The `MatchID` is **required**. You cannot report a server otherwise.
 - Report cooldown is unknown, I just put it to 24 hours
-
+- Optional Command Line Arguments: `node index_reportserver.js <MatchID> <Amount>`
 
 I heard in the past that reporting a server for bad performance will cancel the match, I cannot confirm this myself. 500 reports did nothing to the server, I'll leave it in the script anyways.
 
