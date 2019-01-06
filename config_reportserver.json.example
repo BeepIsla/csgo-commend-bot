@@ -8,7 +8,7 @@
 		"ListingAbuse": true,
 		"InventoryAbuse": true
 	},
-	"AccountCooldown": 21600000,
+	"AccountCooldown": 86400000,
 	"RateLimitedCooldown": 5400000,
 	"Chunks": {
 		"ReportsPerChunk": 100,
