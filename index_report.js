@@ -30,6 +30,9 @@ if (process.argv[3]) {
 
 if (process.argv[4]) {
 	config.MatchID = process.argv[4];
+} else {
+	// If we do not have a matchID in our arguments just leave it empty
+	config.MatchID = "";
 }
 
 // Add all accounts to the config
