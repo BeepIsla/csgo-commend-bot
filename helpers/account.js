@@ -162,6 +162,103 @@ module.exports = class Account extends Events {
 		});
 	};
 
+	report(accountID, matchid = undefined, timeout = (30 * 1000), aimbot = true, wallhack = true, speedhack = true, teamharm = true, textabuse = true, voiceabuse = true) {
+		// Self reference
+		const self = this;
+
+		return new Promise((resolve, reject) => {
+			if (self.block) {
+				reject("previously_timed_out");
+				return;
+			}
+
+			// Set timeout
+			var _timeout = setTimeout(() => {
+				this.csgoUser.removeListener("debug", ReportResponse);
+				reject(new Error("Failed to send report: Timeout"));
+			}, timeout);
+
+			// Listen to report
+			this.csgoUser.on("debug", ReportResponse);
+			function ReportResponse(event) {
+				if (event.header.msg === self.csgoUser.Protos.ECsgoGCMsg.k_EMsgGCCStrike15_v2_ClientReportResponse) {
+					var response = self.csgoUser.Protos.CMsgGCCStrike15_v2_ClientReportResponse.decode(event.buffer);
+
+					clearTimeout(_timeout);
+					self.csgoUser.removeListener("debug", ReportResponse);
+
+					resolve(response);
+					return;
+				}
+			}
+
+			var obj = {
+				account_id: accountID,
+				rpt_aimbot: aimbot ? 1 : 0,
+				rpt_wallhack: wallhack ? 1 : 0,
+				rpt_speedhack: speedhack ? 1 : 0,
+				rpt_teamharm: teamharm ? 1 : 0,
+				rpt_textabuse: textabuse ? 1 : 0,
+				rpt_voiceabuse: voiceabuse ? 1 : 0
+			}
+
+			if (matchid) {
+				obj.match_id = matchid;
+			}
+
+			// Send report
+			this.csgoUser._GC.send({
+				msg: this.csgoUser.Protos.ECsgoGCMsg.k_EMsgGCCStrike15_v2_ClientReportPlayer,
+				proto: {}
+			}, new this.csgoUser.Protos.CMsgGCCStrike15_v2_ClientReportPlayer(obj).toBuffer());
+		});
+	};
+
+	reportServer(matchid, timeout = (30 * 1000), poorPerf = true, models = true, motd = true, listing = true, inventory = true) {
+		// Self reference
+		const self = this;
+
+		return new Promise((resolve, reject) => {
+			if (self.block) {
+				reject("previously_timed_out");
+				return;
+			}
+
+			// Set timeout
+			var _timeout = setTimeout(() => {
+				this.csgoUser.removeListener("debug", ReportResponse);
+				reject(new Error("Failed to send report: Timeout"));
+			}, timeout);
+
+			// Listen to report
+			this.csgoUser.on("debug", ReportResponse);
+			function ReportResponse(event) {
+				if (event.header.msg === self.csgoUser.Protos.ECsgoGCMsg.k_EMsgGCCStrike15_v2_ClientReportResponse) {
+					var response = self.csgoUser.Protos.CMsgGCCStrike15_v2_ClientReportResponse.decode(event.buffer);
+
+					clearTimeout(_timeout);
+					self.csgoUser.removeListener("debug", ReportResponse);
+
+					resolve(response);
+					return;
+				}
+			}
+
+			// Send report
+			this.csgoUser._GC.send({
+				msg: this.csgoUser.Protos.ECsgoGCMsg.k_EMsgGCCStrike15_v2_ClientReportServer,
+				proto: {}
+			}, new this.csgoUser.Protos.CMsgGCCStrike15_v2_ClientReportServer({
+				rpt_poorperf: poorPerf ? 1 : 0,
+				rpt_abusivemodels: models ? 1 : 0,
+				rpt_badmotd: motd ? 1 : 0,
+				rpt_listingabuse: listing ? 1 : 0,
+				rpt_inventoryabuse: inventory ? 1 : 0,
+				match_id: matchid
+			}).toBuffer());
+		});
+	};
+
 	logout() {
 		this.steamUser.logOff();
 	};

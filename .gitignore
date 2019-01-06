@@ -5,8 +5,11 @@ accountparser.js
 doStuffWithAllAccounts.js
 manualLogin.js
 accounts.json
-config.json
 turnOffSteamGuard.js
 
 checkProxy.js
 test.js
+
+config.json
+config_report.json
+config_reportserver.json

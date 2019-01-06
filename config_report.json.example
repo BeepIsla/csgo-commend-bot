@@ -1,0 +1,24 @@
+{
+	"SteamAPIKey": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+	"AccountToReport": "https://steamcommunity.com/id/gabelogannewell/",
+	"ReportsToSend": 20,
+	"MatchID": "3321676585878159681",
+	"Report": {
+		"Aimbot": true,
+		"Wallhack": true,
+		"Speedhack": true,
+		"Teamharm": true,
+		"Textabuse": true,
+		"Voiceabuse": true
+	},
+	"AccountCooldown": 86400000,
+	"RateLimitedCooldown": 5400000,
+	"Chunks": {
+		"ReportsPerChunk": 200,
+		"SwitchProxyEvery": 2,
+		"TimeBetweenChunks": 20000,
+		"TimeBetweenConnectionAndSending": 500,
+		"BeautifyDelay": 2500
+	},
+	"Proxies": []
+}
