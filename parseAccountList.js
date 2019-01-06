@@ -25,6 +25,8 @@ fs.readFile("./input.txt", (err, data) => {
 			sharedSecret: "",
 			operational: true,
 			lastCommend: -1,
+			lastReport: -1,
+			lastServerReport: -1,
 			requiresSteamGuard: false,
 			commended: []
 		});

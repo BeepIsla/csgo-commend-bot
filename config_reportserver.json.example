@@ -1,0 +1,21 @@
+{
+	"ReportsToSend": 10,
+	"MatchID": "3321676585878159681",
+	"Report": {
+		"PoorPerformance": true,
+		"AbusiveModels": true,
+		"BadMOTD": true,
+		"ListingAbuse": true,
+		"InventoryAbuse": true
+	},
+	"AccountCooldown": 21600000,
+	"RateLimitedCooldown": 5400000,
+	"Chunks": {
+		"ReportsPerChunk": 100,
+		"SwitchProxyEvery": 2,
+		"TimeBetweenChunks": 20000,
+		"TimeBetweenConnectionAndSending": 500,
+		"BeautifyDelay": 2500
+	},
+	"Proxies": []
+}
