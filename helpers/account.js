@@ -80,6 +80,10 @@ module.exports = class Account extends Events {
 			this.csgoUser.start();
 
 			this._timeout = setTimeout(() => {
+				if (self.csgoUser._GCHelloInterval) {
+					clearInterval(self.csgoUser._GCHelloInterval);
+				}
+
 				self.block = true;
 				self.emit("error", new Error("Failed to connect to GC: Timeout"));
 			}, timeout);
