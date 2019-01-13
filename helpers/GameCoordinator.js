@@ -24,6 +24,10 @@ module.exports = class GameCoordinator extends Events {
 	start() {
 		// Send hello every 3 seconds
 		this._GCHelloInterval = setInterval(() => {
+			if (!this._GC._client || this._GC._client.connected !== true || !this._GC._client._connection || !this._GC._client._connection.send) {
+				return;
+			}
+
 			// Client Hello
 			this._GC.send({
 				msg: Protos.EGCBaseClientMsg.k_EMsgGCClientHello,
