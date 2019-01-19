@@ -14,7 +14,7 @@ fs.readFile("./input.txt", (err, data) => {
   data = data.toString();
 
   data.split("\n").forEach(a => {
-    accpw = [a.trim().split(":")];
+    accpw = [];
     accpw.push(a.trim().slice(0, str.indexOf(":")));
     accpw.push(a.trim().slice(str.indexOf(":") + 1));
 
