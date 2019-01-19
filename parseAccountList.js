@@ -15,33 +15,26 @@ fs.readFile("./input.txt", (err, data) => {
 	data = data.toString();
 
 	data.split("\n").forEach(a => {
-    		accpw = a.trim().split(":");
-    		
-		//Check if account is already present in our list
-    		var repeated = 0;
-    		for (var i = 0; i < accounts.length; i++) {
-      			if (accounts[i]["username"] === accpw[0]) {
-        			repeated = 1;
-			        break;
-      			}
-    		}
+		accpw = a.trim().split(":");
 
-    		console.log(accpw[0]);
-    		if (!repeated) {
-      			accounts.push({
-        			username: accpw[0],
-        			password: accpw[1],
-        			sharedSecret: "",
-        			operational: true,
-        			lastCommend: -1,
-        			lastReport: -1,
-        			lastServerReport: -1,
-        			requiresSteamGuard: false,
-        			commended: []
-      			});
-    		} else {
-      			console.log("Account already present : " + accpw[0]);
-    		}
+		// Check if an account is already present in our list
+		if (accounts.map(a => a.username).indexOf(accpw[0]) >= 0) {
+			console.log("Account already present : " + accpw[0]);
+			return;
+		}
+
+		console.log(accpw[0]);
+		accounts.push({
+			username: accpw[0],
+			password: accpw[1],
+			sharedSecret: "",
+			operational: true,
+			lastCommend: -1,
+			lastReport: -1,
+			lastServerReport: -1,
+			requiresSteamGuard: false,
+			commended: []
+		});
 	});
 
 	fs.writeFile("./accounts.json", JSON.stringify(accounts, null, 4), (err) => {
