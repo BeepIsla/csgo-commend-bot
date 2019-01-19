@@ -17,8 +17,13 @@ fs.readFile("./input.txt", (err, data) => {
 	data.split("\n").forEach(a => {
 		accpw = a.trim().split(":");
 
-		console.log(accpw[0]);
+		// Check if an account is already present in our list
+		if (accounts.map(a => a.username).indexOf(accpw[0]) >= 0) {
+			console.log("Account already present : " + accpw[0]);
+			return;
+		}
 
+		console.log(accpw[0]);
 		accounts.push({
 			username: accpw[0],
 			password: accpw[1],
