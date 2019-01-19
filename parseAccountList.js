@@ -2,7 +2,6 @@ const AppendToFile = true; // Set this to "false" if you want to fully override 
 
 // Actual stuff
 const fs = require("fs");
-
 var accounts =
   AppendToFile === true ? JSON.parse(fs.readFileSync("./accounts.json")) : [];
 
@@ -15,8 +14,8 @@ fs.readFile("./input.txt", (err, data) => {
 
   data.split("\n").forEach(a => {
     accpw = [];
-    accpw.push(a.trim().slice(0, str.indexOf(":")));
-    accpw.push(a.trim().slice(str.indexOf(":") + 1));
+    accpw.push(a.trim().slice(0, a.indexOf(":")));
+    accpw.push(a.trim().slice(a.indexOf(":") + 1));
 
     //Check if account is already present in our list
     var repeated = 0;

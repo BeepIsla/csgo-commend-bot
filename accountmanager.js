@@ -15,7 +15,7 @@ config.accounts = require("./accounts.json");
 var accounts = JSON.parse(fs.readFileSync("./accounts.json"));
 
 var args = process.argv.slice(2);
-console.log(args);
+
 if (args.indexOf("--available") > -1) {
   var available = config.accounts.filter(
     a =>
@@ -56,10 +56,12 @@ if (args.indexOf("--available") > -1) {
   }
 } else if (args.indexOf("--clean") > -1) {
   //Remove accounts with missing username or password
+  console.log("Removing accounts with empty username/password");
   accounts = accounts.filter(
     x => !(x["username"] == "" || x["password"] == "")
   );
 
+  console.log("Removing duplicate accounts");
   //Remove duplicate accounts
   accounts = accounts.filter((obj, pos, arr) => {
     return (
@@ -74,4 +76,8 @@ if (args.indexOf("--available") > -1) {
 
     console.log("Successfully cleaned the account list");
   });
+} else {
+  console.log(
+    "Unknown arguement : " + args[0] + "\nPlease check documentation for help"
+  );
 }
