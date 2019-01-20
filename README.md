@@ -1,17 +1,21 @@
 # CSGO Commend Bot
+
 This is a simple commend bot written in JavaScript, simply because its the language I am the most familiar with.
 
 # Side features
+
 This bot has 2 side features, a report bot and a server-report bot.
 
 I will not explain a lot about those 2 side features, just follow the examples. The one without suffix are the normal commend bot. The majority of the config is based off of the normal [config.json](#config), just one or two things are different.
 
 ## Report Bot:
+
 - The `MatchID` is optional, just leave it empty (`""`) if you do not want to use it
 - Report cooldown is 24 hours per report
 - Optional Command Line Arguments: `node index_report.js <Account> <Amount> [MatchID]`
 
 ## Server-Report Bot:
+
 - The `MatchID` is **required**. You cannot report a server otherwise.
 - Report cooldown is unknown, I just put it to 24 hours
 - Optional Command Line Arguments: `node index_reportserver.js <MatchID> <Amount>`
@@ -19,26 +23,32 @@ I will not explain a lot about those 2 side features, just follow the examples. 
 I heard in the past that reporting a server for bad performance will cancel the match, I cannot confirm this myself. 500 reports did nothing to the server, I'll leave it in the script anyways.
 
 # Previews
+
 ## Botted account:
+
 ![Account Preview](https://i.imgur.com/XCSoUOb.png)
 
 ## Console Log:
+
 ![Console Preview](https://i.imgur.com/QUStP3O.png)
 
 # Requirements
+
 - [NodeJS](https://nodejs.org/)
 - [Some JSON knowledge](https://www.json.org/)
 
 # Installation
+
 1. Download/Clone this repository
 2. Put it all in a folder
-3. Open a command prompt *inside* the folder
+3. Open a command prompt _inside_ the folder
 4. Enter `npm install`
 5. Rename `config.json.example` to `config.json` and adjust it ([See below](#config))
 6. Rename `accounts.json.example` to `accounts.json` and fill it with accounts ([See below](#accounts) - To parse a `account:password` see [Account Parsing](#account-parsing))
 7. Run `node index.js` - Optionally you can use [command line arguments](#command-line-arguments)
 
 # Config
+
 - SteamAPIKey:
 - - Type: String
 - - Description: Your SteamWebAPIKey from [Steam](https://steamcommunity.com/dev/apikey)
@@ -85,7 +95,9 @@ I heard in the past that reporting a server for bad performance will cancel the 
 - - Description: Each string is the IP:Port ([See below](#proxies))
 
 # Accounts
+
 The accounts.json is an array of objects, each object has this structure:
+
 - username:
 - - Type: String
 - - Description: The username used to log into Steam
@@ -109,7 +121,9 @@ The accounts.json is an array of objects, each object has this structure:
 - - Description: A list of each user this account has already commended
 
 # Account To Commend
+
 You can enter any of the following formats:
+
 - SteamID: `"STEAM_0:0:11101"` (String)
 - SteamID3: `"[U:1:22202]"` (String)
 - SteamID64: `"76561197960287930"` (String)
@@ -120,9 +134,11 @@ You can enter any of the following formats:
 **Don't have a SteamAPI Key? Just keep using the AccountID as a Number and it will not make a SteamAPI request**
 
 # Account Parsing
+
 Use the `parseAccountList.js` in order to parse a list of `account:password` into a compatible format. To use this just rename your file to `input.txt` or change line 10 in the script. By default it will append all accounts to the list already present in `accounts.json`. If you want to fully override all accounts in the `accounts.json` change `AppendToFile` from `true` to `false` in the script at line 1. To run it just enter `node parseAccountList.js`.
 
 # Command Line Arguments
+
 You can define up to 2 command line arguments.
 
 The first one is always the SteamID you want to commend bot, it accepts any of [these](#account-to-commend) formats as long as there is no space in it.
@@ -148,3 +164,17 @@ Use an empty array (Eg: `[]`) if you do not want to use any proxies
 `SwitchProxyEvery` in the config defines how many chunks share the same proxy.
 
 [HTTPS Proxies are **not** supported](https://github.com/DoctorMcKay/node-steam-client#sethttpproxyproxyurl)
+
+#Account List Manager
+
+This module will help in parsing and cleaning the account list
+
+Syntax
+
+`node accountmanager.js [--clean] [--available] [--delete]`
+
+Arguements List
+
+~ `--clean` - Will clean the `accounts.json` file by removing duplicate entries and removing entries with empty username/password
+~ `--available` - Will show the number of accounts available to commend
+~ `--delete <usernames>` - Will remove the accounts from the accounts list. You can remove multiple accounts at once by providing the usernames separated by space
