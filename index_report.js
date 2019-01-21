@@ -42,23 +42,6 @@ var curProxy = -1;
 var proxyChunk = 0;
 var reportsSent = 0;
 var reportsFailed = 0;
-
-console.log(colors.general + "Getting " + config.ReportsToSend + " account" + (config.ReportsToSend === 1 ? "" : "s"));
-
-// First we get all available accounts (You can report once every 24 hours)
-var available = config.accounts.filter(a => a.operational === true && a.requiresSteamGuard === false && (new Date().getTime() - (a.lastReport ? a.lastReport : -1)) >= config.AccountCooldown);
-
-// Check if we have enough available accounts
-if (available.length < config.ReportsToSend) {
-	console.log(colors.general + available.length + "/" + config.accounts.length + " account" + (config.accounts.length === 1 ? "" : "s") + " available but we need " + config.ReportsToSend + " account" + (config.ReportsToSend === 1 ? "" : "s"));
-	return;
-}
-
-// Get needed accounts
-var accountsToUse = available.slice(0, config.ReportsToSend);
-
-// Split accounts into chunks, do "ReportsPerChunk" at a time
-var chunks = chunkArray(accountsToUse, config.Chunks.ReportsPerChunk);
 var chunkComplete = 0;
 var chunkCompleteLimit = -1;
 var hitRatelimit = false;
@@ -79,6 +62,23 @@ var hitRatelimit = false;
 	config.AccountToReport = output.accountid;
 
 	console.log(colors.general + "Successfully parsed account to " + config.AccountToReport);
+
+	console.log(colors.general + "Getting " + config.ReportsToSend + " account" + (config.ReportsToSend === 1 ? "" : "s"));
+
+	// First we get all available accounts (You can report once every 24 hours)
+	var available = config.accounts.filter(a => a.operational === true && a.requiresSteamGuard === false && (new Date().getTime() - (a.lastReport ? a.lastReport : -1)) >= config.AccountCooldown);
+
+	// Check if we have enough available accounts
+	if (available.length < config.ReportsToSend) {
+		console.log(colors.general + available.length + "/" + config.accounts.length + " account" + (config.accounts.length === 1 ? "" : "s") + " available but we need " + config.ReportsToSend + " account" + (config.ReportsToSend === 1 ? "" : "s"));
+		return;
+	}
+
+	// Get needed accounts
+	var accountsToUse = available.slice(0, config.ReportsToSend);
+
+	// Split accounts into chunks, do "ReportsPerChunk" at a time
+	var chunks = chunkArray(accountsToUse, config.Chunks.ReportsPerChunk);
 
 	// Wait 5 seconds before starting the actual process
 	await new Promise(r => setTimeout(r, (5 * 1000)));
