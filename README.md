@@ -120,6 +120,15 @@ The accounts.json is an array of objects, each object has this structure:
 - - Type: Array of Integers
 - - Description: A list of each user this account has already commended
 
+# Removing commends
+
+**This is experimental and might not work as intended**
+
+- Adjust `config_undoCommends.json`
+- Run `node index_undoCommends.js`
+
+The bot should now remove some commends, ofcourse you can only remove the commends you sent yourself and not of other players. It is **required** for the user to be in the "Commended" list of the accounts.json else the bot will not be treated as being able to uncommend.
+
 # Account To Commend
 
 You can enter any of the following formats:
