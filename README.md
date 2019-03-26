@@ -1,5 +1,13 @@
 # CSGO Commend Bot
 
+# Commend Bots have been fixed by Valve for the most part
+
+**There is a work around but I don't fully know how it works, so I can't implement it.**
+
+[View this issue thread for updates](https://github.com/BeepFelix/csgo-commend-bot/issues/50)
+
+---
+
 This is a simple commend bot written in JavaScript, simply because its the language I am the most familiar with.
 
 # Side features
@@ -174,16 +182,14 @@ Use an empty array (Eg: `[]`) if you do not want to use any proxies
 
 [HTTPS Proxies are **not** supported](https://github.com/DoctorMcKay/node-steam-client#sethttpproxyproxyurl)
 
-#Account List Manager
+# Account List Manager
 
 This module will help in parsing and cleaning the account list
 
-Syntax
+**Syntax**
+- `node accountmanager.js [--clean] [--available] [--delete]`
 
-`node accountmanager.js [--clean] [--available] [--delete]`
-
-Arguements List
-
-~ `--clean` - Will clean the `accounts.json` file by removing duplicate entries and removing entries with empty username/password
-~ `--available` - Will show the number of accounts available to commend
-~ `--delete <usernames>` - Will remove the accounts from the accounts list. You can remove multiple accounts at once by providing the usernames separated by space
+**Arguments List**
+- `--clean` - Will clean the `accounts.json` file by removing duplicate entries and removing entries with empty username/password
+- `--available` - Will show the number of accounts available to commend
+- `--delete <usernames>` - Will remove the accounts from the accounts list. You can remove multiple accounts at once by providing the usernames separated by space
