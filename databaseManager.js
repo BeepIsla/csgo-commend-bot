@@ -147,8 +147,8 @@ const config = require("./config.json");
 				});
 
 				let data = await Promise.all([
-					db.run("DROP FROM commended WHERE username = \"" + input.input + "\""),
-					db.run("DROP FROM accounts WHERE username = \"" + input.input + "\"")
+					db.run("DELETE FROM commended WHERE username = \"" + input.input + "\""),
+					db.run("DELETE FROM accounts WHERE username = \"" + input.input + "\"")
 				]);
 
 				console.log("Successfully removed " + data[0].changes + " entr" + (data[0].changes === 1 ? "y" : "ies") + " from the commend history and " + data[1].changes + " account" + (data[1].changes === 1 ? "" : "s"));
