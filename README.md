@@ -27,7 +27,7 @@ Typically after ~20 commends it stops working all together, despite closing Stea
 4. Open a command prompt *inside* the folder
 5. Enter `npm install`
 6. Rename `config.json.example` to `config.json` and adjust it ([See below](#config))
-7. Rename `accounts.json.example` to `accounts.json` and fill it with accounts ([See below](#accounts)
+7. Add accounts using the [Database Manager](#database-manager)
 8. Run `node index.js`
 
 # Config
@@ -44,17 +44,6 @@ Typically after ~20 commends it stops working all together, despite closing Stea
 - cooldown `Number`: Cooldown in milliseconds to not reuse accounts - Currently set to 8 hours
 - betweenChunks `Number`: Cooldown in milliseconds between chunks
 - steamWebAPIKey `String`: Steam Web API key from [here](https://steamcommunity.com/dev/apikey)
-
-# Accounts
-You can automatically parse a text file of `username:password` accounts or a JSON file with a structure as below using the [Database Manager](#database-manager)
-
-The accounts.json is an array of objects, each object has this structure:
-
-- username `String`: Username of a bot
-- password `String`: Password of the bot
-- sharedSecret `String`: Optional shared secret
-- commended `Array.<Number>`: List of account IDs this bot already commended
-- lastCommend `Number`: Timestamp when the bot last commended someone
 
 # Database Manager
 - `Export account list`: Export all accounts in a `username:password` format
