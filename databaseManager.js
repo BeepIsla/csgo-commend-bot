@@ -100,7 +100,7 @@ const config = require("./config.json");
 							break;
 						}
 
-						case "Import accounts:password file": {
+						case "Import from username:password file": {
 							list = fs.readFileSync(filePath).toString().trim().split("\n").map(s => s.trim());
 							break;
 						}
