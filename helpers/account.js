@@ -1,4 +1,5 @@
 const SteamUser = require("steam-user");
+const SteamTotp = require("steam-totp");
 const GameCoordinator = require("./GameCoordinator.js");
 
 module.exports = class Account {
