@@ -1,10 +1,6 @@
 # CSGO Commend Bot
 
-# Commend Bots have been fixed by Valve for the most part
-
-**There is a work around but I don't fully know how it works, so I can't implement it.**
-
-[View this issue thread for updates](https://github.com/BeepFelix/csgo-commend-bot/issues/50)
+**A new version has been released, view the [Experimental](https://github.com/BeepFelix/csgo-commend-bot/tree/experimental) branch to use it.**
 
 ---
 
