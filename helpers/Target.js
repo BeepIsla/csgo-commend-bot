@@ -1,4 +1,5 @@
-const Worker = require("worker_threads");
+const ChildProcess = require("child_process");
+const inquirer = require("inquirer");
 
 module.exports = class Target {
 	constructor(username, password, sharedSecret) {
@@ -7,7 +8,7 @@ module.exports = class Target {
 		this.sharedSecret = sharedSecret;
 
 		this.accountid = 0;
-		this.worker = null;
+		this.childProcess = null;
 	}
 
 	login() {
@@ -15,18 +16,33 @@ module.exports = class Target {
 			this._res_loggedOn = resolve;
 			this._rej_loggedOn = reject;
 
-			this.worker = new Worker.Worker("./helpers/TargetW.js", {
-				workerData: {
-					username: this.username,
-					password: this.password,
-					sharedSecret: this.sharedSecret
-				}
+			this.childProcess = ChildProcess.fork("./TargetW.js", [
+				this.username,
+				this.password,
+				this.sharedSecret
+			], {
+				cwd: __dirname,
+				execArgv: process.execArgv.join(" ").includes("--inspect") ? ["--inspect=0"] : []
 			});
 
-			this.worker.on("error", console.error);
+			this.childProcess.on("error", console.error);
 
-			this.worker.on("message", (msg) => {
+			this.childProcess.on("message", async (msg) => {
 				if (msg.type === "logging") {
+					return;
+				}
+
+				if (msg.type === "steamGuard") {
+					let r = await inquirer.prompt({
+						type: "input",
+						name: "code",
+						message: "Steam Guard Code (" + (typeof msg.domain === "string" ? msg.domain : "Mobile") + ")"
+					});
+
+					this.childProcess.send({
+						type: "steamGuard",
+						code: r.code
+					});
 					return;
 				}
 
@@ -65,7 +81,8 @@ module.exports = class Target {
 					});
 					this._res_disconnected = null;
 
-					this.worker = null;
+					this.childProcess.kill();
+					this.childProcess = null;
 					return;
 				}
 			});
@@ -76,14 +93,14 @@ module.exports = class Target {
 		return new Promise((resolve, reject) => {
 			this._res_disconnected = resolve;
 
-			this.worker.postMessage({
+			this.childProcess.send({
 				type: "end"
 			});
 		});
 	}
 
 	setGamesPlayed(serverID) {
-		this.worker.postMessage({
+		this.childProcess.send({
 			type: "gamesPlayed",
 			steamid: serverID
 		});

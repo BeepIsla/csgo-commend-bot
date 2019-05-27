@@ -1,5 +1,6 @@
 const sqlite = require("sqlite");
-const Worker = require("worker_threads");
+const ChildProcess = require("child_process");
+const path = require("path");
 const Helper = require("./helpers/Helper.js");
 const Target = require("./helpers/Target.js");
 const config = require("./config.json");
@@ -100,23 +101,31 @@ let db = undefined;
 
 function handleChunk(chunk, toCommend, serverSteamID) {
 	return new Promise(async (resolve, reject) => {
-		let worker = new Worker.Worker("./helpers/Bots.js", {
-			workerData: {
-				config: config,
-				chunk: chunk,
-				toCommend: toCommend,
-				serverSteamID: serverSteamID
-			}
+		let child = ChildProcess.fork("./Bots.js", [], {
+			cwd: path.join(__dirname, "helpers"),
+			execArgv: process.execArgv.join(" ").includes("--inspect") ? ["--inspect=0"] : []
 		});
+
+		child.on("error", console.error);
 
 		let res = {
 			success: [],
 			error: []
 		};
 
-		worker.on("message", async (msg) => {
+		child.on("message", async (msg) => {
+			if (msg.type === "ready") {
+				child.send({
+					config: config,
+					chunk: chunk,
+					toCommend: toCommend,
+					serverSteamID: serverSteamID
+				});
+				return; 
+			}
+
 			if (msg.type === "error") {
-				console.error("The worker has exited due to an error", msg.error);
+				console.error("The child has exited due to an error", msg.error);
 				return;
 			}
 
@@ -167,7 +176,7 @@ function handleChunk(chunk, toCommend, serverSteamID) {
 			}
 		});
 
-		worker.on("exit", () => {
+		child.on("exit", () => {
 			resolve(res);
 		});
 	});

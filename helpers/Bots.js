@@ -1,16 +1,31 @@
-const Worker = require("worker_threads");
 const serializeError = require("serialize-error");
 const Account = require("./account.js");
 
-const config = Worker.workerData.config;
-const chunk = Worker.workerData.chunk;
-const toCommend = Worker.workerData.toCommend;
-const serverSteamID = Worker.workerData.serverSteamID;
+let started = false;
 
 (async () => {
+	process.send({
+		type: "ready"
+	});
+
+	while (started === false) {
+		await new Promise(r => setTimeout(r, 1000));
+	}
+})();
+
+process.on("message", async (msg) => {
+	started = true;
+
+	const config = msg.config;
+	const chunk = msg.chunk;
+	const toCommend = msg.toCommend;
+	const serverSteamID = msg.serverSteamID;
+
 	try {
+		let done = 0;
+
 		for (let acc of chunk) {
-			Worker.parentPort.postMessage({
+			process.send({
 				type: "logging",
 				username: acc.username
 			});
@@ -18,20 +33,20 @@ const serverSteamID = Worker.workerData.serverSteamID;
 			const a = new Account();
 
 			a.login(acc.username, acc.password, acc.sharedSecret).then(async (hello) => {
-				Worker.parentPort.postMessage({
+				process.send({
 					type: "loggedOn",
 					username: a.username,
 					hello: hello
 				});
 
 				await a.commendPlayer(serverSteamID, toCommend, config.matchid ? config.matchid : "0", config.commend.friendly, config.commend.teaching, config.commend.leader).then((response) => {
-					Worker.parentPort.postMessage({
+					process.send({
 						type: "commended",
 						username: a.username,
 						response: response
 					});
 				}).catch((err) => {
-					Worker.parentPort.postMessage({
+					process.send({
 						type: "commendErr",
 						username: a.username,
 						error: serializeError(err)
@@ -39,19 +54,26 @@ const serverSteamID = Worker.workerData.serverSteamID;
 				});
 
 				a.logOff();
+				done += 1;
 			}).catch((err) => {
-				Worker.parentPort.postMessage({
+				process.send({
 					type: "failLogin",
 					username: a.username,
 					error: serializeError(err)
 				});
 
 				a.logOff();
+				done += 1;
 			});
 		}
 
-		// The worker will automatically exit once all bots have disconnected from Steam
+		// The process will automatically exit once all bots have disconnected from Steam
+		while (done < chunk.length) {
+			await new Promise(p => setTimeout(p, 500));
+		}
+
+		process.exit(0);
 	} catch (err) {
 		throw err;
 	}
-})();
+});

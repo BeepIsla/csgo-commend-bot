@@ -10,6 +10,7 @@ module.exports = class Account {
 			picsCacheAll: false
 		});
 		this.csgoUser = new GameCoordinator(this.steamUser);
+		this.loginTimeout = null;
 	}
 
 	/**
@@ -24,7 +25,7 @@ module.exports = class Account {
 		this.username = username;
 
 		return new Promise((resolve, reject) => {
-			let loginTimeout = setTimeout(() => {
+			this.loginTimeout = setTimeout(() => {
 				this.steamUser.logOff();
 				this.steamUser.removeListener("error", error);
 				this.steamUser.removeListener("loggedOn", loggedOn);
@@ -41,7 +42,8 @@ module.exports = class Account {
 			this.steamUser.logOn(logonSettings);
 
 			let error = (err) => {
-				clearTimeout(loginTimeout);
+				clearTimeout(this.loginTimeout);
+				this.loginTimeout = null;
 
 				this.steamUser.removeListener("error", error);
 				this.steamUser.removeListener("loggedOn", loggedOn);
@@ -50,7 +52,8 @@ module.exports = class Account {
 			};
 
 			let loggedOn = () => {
-				clearTimeout(loginTimeout);
+				clearTimeout(this.loginTimeout);
+				this.loginTimeout = null;
 
 				this.steamUser.setPersona(SteamUser.EPersonaState.Online);
 				this.steamUser.gamesPlayed(730);
