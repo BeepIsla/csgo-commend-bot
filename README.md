@@ -42,7 +42,7 @@ Typically after ~20 commends it stops working all together, despite closing Stea
 - matchID `String`: Optional match ID, typically just `"0"` anyways - I always use `"0"`.
 - toSend `Number`: Amount of commends you want to send
 - cooldown `Number`: Cooldown in milliseconds to not reuse accounts - Currently set to 8 hours
-- betweenChunks `Number`: Cooldown in milliseconds between chunks
+- betweenChunks `Number`: Cooldown in milliseconds between chunks - (I recommend a minimum of `240000` (4 minutes))
 - steamWebAPIKey `String`: Steam Web API key from [here](https://steamcommunity.com/dev/apikey)
 
 # Database Manager

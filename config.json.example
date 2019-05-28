@@ -12,6 +12,6 @@
 	"matchID": "0",
 	"toSend": 100,
 	"cooldown": 28800000,
-	"betweenChunks": 10000,
+	"betweenChunks": 240000,
 	"steamWebAPIKey": "SteamWebAPIKey"
 }
