@@ -2,7 +2,7 @@
 	"account": {
 		"username": "Username",
 		"password": "Password",
-		"sharedSecret": "LeaveEmptyIfNo2FactorAuthentication"
+		"sharedSecret": ""
 	},
 	"commend": {
 		"friendly": true,
