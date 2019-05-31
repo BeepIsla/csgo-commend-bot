@@ -72,6 +72,7 @@ process.on("message", async (msg) => {
 			await new Promise(p => setTimeout(p, 500));
 		}
 
+		await new Promise(p => setTimeout(p, 5000));
 		process.exit(0);
 	} catch (err) {
 		throw err;
