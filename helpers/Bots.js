@@ -67,7 +67,7 @@ process.on("message", async (msg) => {
 			});
 		}
 
-		// The process will automatically exit once all bots have disconnected from Steam
+		// The process should automatically exit once all bots have disconnected from Steam but it doesn't
 		while (done < chunk.length) {
 			await new Promise(p => setTimeout(p, 500));
 		}

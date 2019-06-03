@@ -5,6 +5,8 @@ const fs = require("fs");
 const Helper = require("./helpers/Helper.js");
 const config = require("./config.json");
 
+const helper = new Helper(config.steamWebAPIKey);
+
 (async () => {
 	console.log("Opening database...");
 	let db = await sqlite.open("./accounts.sqlite");
@@ -162,7 +164,7 @@ const config = require("./config.json");
 					message: "Enter the SteamID or profile URL you want to reset commend history of"
 				});
 
-				let sid = await Helper.ParseSteamID(input.input, config.steamWebAPIKey).catch(() => {});
+				let sid = await helper.parseSteamID(input.input).catch(() => {});
 				if (typeof sid === "undefined") {
 					console.log("Failed to find SteamID of input");
 					break;
@@ -180,7 +182,7 @@ const config = require("./config.json");
 					message: "Enter the SteamID or profile URL you want to list the commend history of"
 				});
 
-				let sid = await Helper.ParseSteamID(input.input, config.steamWebAPIKey).catch(() => {});
+				let sid = await helper.parseSteamID(input.input).catch(() => {});
 				if (typeof sid === "undefined") {
 					console.log("Failed to find SteamID of input");
 					break;

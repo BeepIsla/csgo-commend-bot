@@ -11,8 +11,6 @@ Typically after ~20 commends it stops working all together, despite closing Stea
 
 # Future
 - Add back the colors
-- Add the ability to send commends by entering SteamID & ServerID
-- Add the ability to send commends by entering SteamID only if target is on Matchmaking
 - Add the ability to remove commends
 - Add the ability to commend three times with one account per 24 hours instead of once every 8 hours
 
@@ -31,14 +29,16 @@ Typically after ~20 commends it stops working all together, despite closing Stea
 8. Run `node index.js`
 
 # Config
-- account:
-  - username `String`: Username of the account you want to boost
-  - password `String`: Pasword of the account you want to boost
-  - sharedSecret `String`: Optional shared secret if the account has two factor authentication
 - commend:
   - friendly `Boolean`: Whether or not to commend as friendly
   - teaching `Boolean`: Whether or not to commend as teaching
   - leader `Boolean`: Whether or not to commend as leader
+- account:
+  - username `String`: Username of the account you want to boost
+  - password `String`: Pasword of the account you want to boost
+  - sharedSecret `String`: Optional shared secret if the account has two factor authentication
+- method `String`: Define the method - Valid values: `LOGIN` & `SERVER` - [Read More](#botting-method)
+- target `String`: SteamID/VanityURL/ProfileURL of target
 - matchID `String`: Optional match ID, typically just `"0"` anyways - I always use `"0"`.
 - toSend `Number`: Amount of commends you want to send
 - cooldown `Number`: Cooldown in milliseconds to not reuse accounts - Currently set to 8 hours
@@ -56,3 +56,9 @@ Typically after ~20 commends it stops working all together, despite closing Stea
 - `Exit`: Safely close database before exiting process
 
 Then simple run it via `node databaseManager.js`, use the arrow keys & enter to navigate. Read on-screen instructions for more details.
+
+# Botting Method
+You can choose between two botting methods, `LOGIN` and `SERVER`.
+
+- `LOGIN` will log into the targets account and automatically grab a server. `account` object **must** be filled with account details. Will ignore `target` & `serverID`.
+- `SERVER` will assume the target is on the defined server. `serverID` **must** be either a ServerIP including port or a direct ServerID. Will ignore `account`.

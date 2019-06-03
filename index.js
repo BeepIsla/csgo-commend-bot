@@ -1,20 +1,26 @@
 const sqlite = require("sqlite");
 const ChildProcess = require("child_process");
 const path = require("path");
-const Helper = require("./helpers/Helper.js");
 const Target = require("./helpers/Target.js");
+const Helper = require("./helpers/Helper.js");
 const config = require("./config.json");
 
 process.on("unhandledRejection", console.error);
 process.on("uncaughtException", console.error);
 
+const helper = new Helper(config.steamWebAPIKey);
 let db = undefined;
 
 (async () => {
+	if ([ "LOGIN", "SERVER" ].includes(config.method.toUpperCase()) === false) {
+		console.log("The \"method\" option only allows for \"LOGIN\" or \"SERVER\" value. Please refer to the README for more information.");
+		return;
+	}
+
 	console.log("Checking for new update...");
 	try {
 		let package = require("./package.json");
-		let res = await Helper.GetLatestVersion().catch(console.error);
+		let res = await helper.GetLatestVersion().catch(console.error);
 
 		if (package.version !== res) {
 			let repoURL = package.repository.url.split(".");
@@ -27,6 +33,15 @@ let db = undefined;
 	} catch (err) {
 		console.error(err);
 		console.log("Failed to check for updates");
+	}
+
+	console.log("Checking protobufs...");
+	let foundProtobufs = await helper.verifyProtobufs();
+	if (foundProtobufs === true) {
+		console.log("Found protobufs");
+	} else {
+		console.log("Failed to find protobufs, downloading and extracting...");
+		await helper.downloadProtobufs(__dirname);
 	}
 
 	console.log("Opening database...");
@@ -44,57 +59,64 @@ let db = undefined;
 		return;
 	}
 
-	console.log("Logging into target account...");
-	let targetAcc = new Target(config.account.username, config.account.password, config.account.sharedSecret);
-	await targetAcc.login();
+	let targetAcc = undefined;
+	let serverToUse = undefined;
 
-	let accountsToUse = await db.all("SELECT accounts.username, accounts.password, accounts.sharedSecret FROM accounts LEFT JOIN commended ON commended.username = accounts.username WHERE accounts.username NOT IN (SELECT username FROM commended WHERE commended = " + targetAcc.accountid + " OR commended.username IS NULL) AND (" + Date.now() + " - accounts.lastCommend) >= " + config.cooldown + " AND accounts.operational = 1 GROUP BY accounts.username LIMIT " + config.toSend);
+	if (config.method.toUpperCase() === "LOGIN") {
+		console.log("Getting an available server");
+		serverToUse = (await helper.GetActiveServer()).shift().steamid;
+
+		console.log("Logging into target account");
+		targetAcc = new Target(config.account.username, config.account.password, config.account.sharedSecret);
+		await targetAcc.login();
+	} else if (config.method.toUpperCase() === "SERVER") {
+		console.log("Parsing target account...");
+		targetAcc = (await helper.parseSteamID(config.target)).accountid;
+	}
+
+	let accountsToUse = await db.all("SELECT accounts.username, accounts.password, accounts.sharedSecret FROM accounts LEFT JOIN commended ON commended.username = accounts.username WHERE accounts.username NOT IN (SELECT username FROM commended WHERE commended = " + (typeof targetAcc === "object" ? targetAcc.accountid : targetAcc) + " OR commended.username IS NULL) AND (" + Date.now() + " - accounts.lastCommend) >= " + config.cooldown + " AND accounts.operational = 1 GROUP BY accounts.username LIMIT " + config.toSend);
 	if (accountsToUse.length < config.toSend) {
 		console.log("Not enough accounts available, got " + accountsToUse.length + "/" + config.toSend);
-		await targetAcc.logOff();
+
+		if (typeof targetAcc === "object") {
+			targetAcc.logOff();
+		}
+
+		await db.close();
 		return;
 	}
 
 	console.log("Chunking " + accountsToUse.length + " account" + (accountsToUse.length === 1 ? "" : "s") + " into groups of 20...");
-	let chunks = Helper.chunkArray(accountsToUse, 20); // Chunks are now hardcoded to 20 due to 20 commends being the limit per server
+	let chunks = helper.chunkArray(accountsToUse, 20); // Chunks are now hardcoded to 20 due to 20 commends being the limit per server
 
-	console.log("Loading sever list...");
-	let servers = await Helper.GetServerList(config.steamWebAPIKey);
-	console.log("Got " + servers.length + " server" + (servers.length === 1 ? "" : "s"));
+	if (config.method.toUpperCase() === "LOGIN") {
+		console.log("Getting an available server");
+		serverToUse = (await helper.GetActiveServer()).shift().steamid;
+		targetAcc.setGamesPlayed(serverToUse);
+	} else if (config.method.toUpperCase() === "SERVER") {
+		console.log("Parsing server input");
+		serverToUse = await helper.parseServerID(config.serverID);
+	}
 
-	let serverToUse = undefined;
 	for (let i = 0; i < chunks.length; i++) {
-		serverToUse = servers.shift();
-
-		console.log("Checking server " + serverToUse.steamid + " for online status");
-		let res = await Helper.ParseServerID(serverToUse.steamid, config.steamWebAPIKey).catch(() => { });
-		if (typeof res !== "string") {
-			console.log("Skipping server " + serverToUse.steamid + " because they are offline");
-			i -= 1;
-			continue;
-		}
-
-		console.log("Switching server ID to " + serverToUse.steamid);
-		targetAcc.setGamesPlayed(serverToUse.steamid);
-
 		console.log("Logging in on chunk " + (i + 1) + "/" + chunks.length);
 
 		// Do commends
-		let result = await handleChunk(chunks[i], targetAcc.accountid, serverToUse.steamid);
+		let result = await handleChunk(chunks[i], (typeof targetAcc === "object" ? targetAcc.accountid : targetAcc), serverToUse);
 		console.log("Chunk " + (i + 1) + "/" + chunks.length + " finished with " + result.success.length + " successful commend" + (result.success.length === 1 ? "" : "s") + " and " + result.error.length + " failed commend" + (result.error.length === 1 ? "" : "s"));
 
 		// Wait a little bit and relog target if needed
 		if ((i + 1) < chunks.length) {
 			console.log("Waiting " + config.betweenChunks + "ms and relogging account...");
-			await Promise.all([
-				new Promise(r => setTimeout(r, config.betweenChunks)),
-				targetAcc.relog()
-			]);
+			await new Promise(r => setTimeout(r, config.betweenChunks));
 		}
 	}
 
 	// We are done here!
-	await targetAcc.logOff();
+	if (typeof targetAcc === "object") {
+		targetAcc.logOff();
+	}
+
 	await db.close();
 	console.log("Done!");
 })();

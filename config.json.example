@@ -1,17 +1,20 @@
 {
-	"account": {
-		"username": "Username",
-		"password": "Password",
-		"sharedSecret": ""
-	},
 	"commend": {
 		"friendly": true,
 		"teaching": true,
 		"leader": true
 	},
+	"account": {
+		"username": "",
+		"password": "",
+		"sharedSecret": ""
+	},
+	"method": "SERVER",
+	"target": "https://steamcommunity.com/id/gabelogannewell",
+	"serverID": "[A:1:1621585931:12649]",
 	"matchID": "0",
-	"toSend": 100,
+	"toSend": 40,
 	"cooldown": 28800000,
-	"betweenChunks": 240000,
-	"steamWebAPIKey": "SteamWebAPIKey"
+	"betweenChunks": 300000,
+	"steamWebAPIKey": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
 }

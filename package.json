@@ -22,6 +22,7 @@
     "sqlite": "^3.0.3",
     "steam-totp": "^2.1.0",
     "steam-user": "^4.8.0",
-    "steamid": "^1.1.0"
+    "steamid": "^1.1.0",
+    "unzipper": "^0.10.0"
   }
 }
