@@ -180,7 +180,7 @@ module.exports = class Helper {
 				sid = new SteamID(id);
 			} catch (e) { }
 
-			if (typeof sid !== "undefined" && sid.isValid() === true && [0, 12626, 12649].includes(sid.instance) === true && [3, 4].includes(sid.type) === true && sid.universe === 1) {
+			if (typeof sid !== "undefined" && sid.isValid() === true && [0, 12654, 12626, 12649].includes(sid.instance) === true && [3, 4].includes(sid.type) === true && sid.universe === 1) {
 				resolve(sid.getSteamID64());
 				return;
 			}
