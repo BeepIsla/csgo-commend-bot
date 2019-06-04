@@ -75,6 +75,13 @@ process.on("message", async (msg) => {
 		await new Promise(p => setTimeout(p, 5000));
 		process.exit(0);
 	} catch (err) {
-		throw err;
+		process.send({
+			type: "error",
+			username: a.username,
+			error: serializeError(err)
+		});
+
+		await new Promise(p => setTimeout(p, 5000));
+		process.exit(0);
 	}
 });

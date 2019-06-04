@@ -182,7 +182,7 @@ function handleChunk(chunk, toCommend, serverSteamID) {
 			if (msg.type === "commendErr") {
 				res.error.push(msg.error);
 
-				console.log("[" + msg.username + "] Failed to commend (" + (res.error.length + res.success.length) + "/" + chunk.length + ")");
+				console.log("[" + msg.username + "] Failed to commend (" + (res.error.length + res.success.length) + "/" + chunk.length + ")", msg.error);
 
 				await db.run("UPDATE accounts SET lastCommend = " + Date.now() + " WHERE username = \"" + msg.username + "\"").catch(() => { });
 				return;
@@ -191,7 +191,7 @@ function handleChunk(chunk, toCommend, serverSteamID) {
 			if (msg.type === "failLogin") {
 				res.error.push(msg.error);
 
-				console.log("[" + msg.username + "] Failed to login and has been marked as invalid (" + (res.error.length + res.success.length) + "/" + chunk.length + ")");
+				console.log("[" + msg.username + "] Failed to login and has been marked as invalid (" + (res.error.length + res.success.length) + "/" + chunk.length + ")", msg.error);
 
 				await db.run("UPDATE accounts SET operational = 0 WHERE \"username\" = \"" + msg.username + "\"");
 				return;
