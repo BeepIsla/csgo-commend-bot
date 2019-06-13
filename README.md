@@ -39,6 +39,7 @@ Typically after ~20 commends it stops working all together, despite closing Stea
   - sharedSecret `String`: Optional shared secret if the account has two factor authentication
 - method `String`: Define the method - Valid values: `LOGIN` & `SERVER` - [Read More](#botting-method)
 - target `String`: SteamID/VanityURL/ProfileURL of target
+- serverID `String`: ServerID **or** IP of the server - [Read More](#server-id)
 - matchID `String`: Optional match ID, typically just `"0"` anyways - I always use `"0"`.
 - toSend `Number`: Amount of commends you want to send
 - cooldown `Number`: Cooldown in milliseconds to not reuse accounts - Currently set to 8 hours
@@ -62,3 +63,8 @@ You can choose between two botting methods, `LOGIN` and `SERVER`.
 
 - `LOGIN` will log into the targets account and automatically grab a server. `account` object **must** be filled with account details. Will ignore `target` & `serverID`.
 - `SERVER` will assume the target is on the defined server. `serverID` **must** be either a ServerIP including port or a direct ServerID. Will ignore `account`.
+
+# Server ID
+The `serverID` field allows for either ServerIP or ServerID. Server IP is self explanatory. ServerID can be found by entering `status` into the console ingame. On a community server it will look like this: `1.37.0.1/13701 934/7508 secure  [A:1:1297634312:12708]` > `[A:1:1297634312:12708]`. On a Valve server it will look like this: `Connected to =[A:1:3849827331:12657]:0` > `[A:1:3849827331:12657]`.
+
+Make sure to **only** include the stuff between the brackets and the brackets themselves.
