@@ -170,7 +170,7 @@ const helper = new Helper(config.steamWebAPIKey);
 					break;
 				}
 
-				let data = await db.run("DROP FROM commended WHERE commended = " + sid.accountid);
+				let data = await db.run("DELETE FROM commended WHERE commended = " + sid.accountid);
 				console.log("Removed " + data.changes + " entr" + (data.changes === 1 ? "y" : "ies") + " from the commend history");
 				break;
 			}
