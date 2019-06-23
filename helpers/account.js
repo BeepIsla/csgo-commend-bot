@@ -112,7 +112,7 @@ module.exports = class Account {
 				this.csgoUser.Protos.csgo.ECsgoGCMsg.k_EMsgGCCStrike15_v2_ClientReportResponse,
 				this.csgoUser.Protos.csgo.CMsgGCCStrike15_v2_ClientReportResponse,
 				20000
-			).then(resolve, reject);
+			).then(resolve).catch(reject);
 		});
 	}
 
