@@ -1,6 +1,7 @@
 const sqlite = require("sqlite");
 const ChildProcess = require("child_process");
 const path = require("path");
+const SteamUser = require("steam-user");
 const Target = require("./helpers/Target.js");
 const Helper = require("./helpers/Helper.js");
 const config = require("./config.json");
@@ -191,9 +192,23 @@ function handleChunk(chunk, toCommend, serverSteamID) {
 			if (msg.type === "failLogin") {
 				res.error.push(msg.error);
 
-				console.log("[" + msg.username + "] Failed to login and has been marked as invalid (" + (res.error.length + res.success.length) + "/" + chunk.length + ")", msg.error);
+				let ignoreCodes = [
+					SteamUser.EResult.Fail,
+					SteamUser.EResult.InvalidPassword,
+					SteamUser.EResult.AccessDenied,
+					SteamUser.EResult.Banned,
+					SteamUser.EResult.AccountNotFound,
+					SteamUser.EResult.Suspended,
+					SteamUser.EResult.AccountLockedDown,
+					SteamUser.EResult.IPBanned
+				];
 
-				await db.run("UPDATE accounts SET operational = 0 WHERE \"username\" = \"" + msg.username + "\"");
+				if (typeof msg.error.eresult === "number" && ignoreCodes.includes(msg.error.eresult) === false) {
+					console.log("[" + msg.username + "] Failed to login (" + (res.error.length + res.success.length) + "/" + chunk.length + ")", msg.error);
+				} else {
+					console.log("[" + msg.username + "] Failed to login and has been marked as invalid (" + (res.error.length + res.success.length) + "/" + chunk.length + ")", msg.error);
+					await db.run("UPDATE accounts SET operational = 0 WHERE \"username\" = \"" + msg.username + "\"");
+				}
 				return;
 			}
 		});
