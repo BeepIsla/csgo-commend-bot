@@ -51,9 +51,11 @@ module.exports = class Account {
 				reject(err);
 			};
 
-			let loggedOn = () => {
+			let loggedOn = async () => {
 				clearTimeout(this.loginTimeout);
 				this.loginTimeout = null;
+
+				await this.steamUser.requestFreeLicense(730);
 
 				this.steamUser.setPersona(SteamUser.EPersonaState.Online);
 				this.steamUser.gamesPlayed(730);
