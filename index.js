@@ -26,8 +26,9 @@ let db = undefined;
 		if (package.version !== res) {
 			let repoURL = package.repository.url.split(".");
 			repoURL.pop();
-			console.log("A new version is available on Github @ " + repoURL.join(".") + " (Make sure to switch to the \"experimental\" branch first before downloading");
+			console.log("\nA new version is available on Github @ " + repoURL.join("."));
 			console.log("Downloading is optional but recommended. Make sure to check if there are any new values to be added in your old \"config.json\"");
+			await new Promise(p => setTimeout(p, 5000));
 		} else {
 			console.log("Up to date!");
 		}
