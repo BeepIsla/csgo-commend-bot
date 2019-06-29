@@ -19,7 +19,7 @@ Valve changed it so that you now need to *be* on a server before you can commend
 - [Little bit of JSON knowledge](https://www.json.org/)
 
 # Installation
-1. Download this repository (Alternatively use `git` to clone recursively, then you can skip step 2)
+1. Download this repository
 2. Open a command prompt *inside* the folder
 3. Enter `npm install`
 4. Rename `config.json.example` to `config.json` and adjust it ([See below](#config))
