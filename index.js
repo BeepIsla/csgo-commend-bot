@@ -2,6 +2,7 @@ const sqlite = require("sqlite");
 const ChildProcess = require("child_process");
 const path = require("path");
 const SteamUser = require("steam-user");
+const fs = require("fs");
 const Target = require("./helpers/Target.js");
 const Helper = require("./helpers/Helper.js");
 const config = require("./config.json");
@@ -11,6 +12,7 @@ process.on("uncaughtException", console.error);
 
 const helper = new Helper(config.steamWebAPIKey);
 let db = undefined;
+let isNewVersion = false;
 
 (async () => {
 	if ([ "LOGIN", "SERVER" ].includes(config.method.toUpperCase()) === false) {
@@ -21,6 +23,19 @@ let db = undefined;
 	console.log("Checking for new update...");
 	try {
 		let package = require("./package.json");
+
+		if (!fs.existsSync("./data/dev")) {
+			if (fs.existsSync("./data/version")) {
+				let version = fs.readFileSync("./data/version").toString();
+				isNewVersion = version !== package.version;
+			}
+	
+			if (!fs.existsSync("./data")) {
+				fs.mkdirSync("./data");
+			}
+			fs.writeFileSync("./data/version", package.version);
+		}
+
 		let res = await helper.GetLatestVersion().catch(console.error);
 
 		if (package.version !== res) {
@@ -38,11 +53,11 @@ let db = undefined;
 	}
 
 	console.log("Checking protobufs...");
-	let foundProtobufs = await helper.verifyProtobufs();
-	if (foundProtobufs === true) {
+	let foundProtobufs = helper.verifyProtobufs();
+	if (foundProtobufs === true && !isNewVersion) {
 		console.log("Found protobufs");
 	} else {
-		console.log("Failed to find protobufs, downloading and extracting...");
+		console.log(isNewVersion ? "New version detected, updating protobufs..." : "Failed to find protobufs, downloading and extracting...");
 		await helper.downloadProtobufs(__dirname);
 	}
 

@@ -42,18 +42,14 @@ module.exports = class Helper {
 	}
 
 	verifyProtobufs() {
-		return new Promise((resolve, reject) => {
-			let user = new SteamUser();
-			let gc = new GameCoordinator(user);
+		let user = new SteamUser();
+		let gc = new GameCoordinator(user);
 
-			try {
-				// If we find this one then we also find all the other ones
-				gc.Protos.csgo.EGCBaseClientMsg.k_EMsgGCClientHello;
-				resolve(true);
-			} catch (e) {
-				resolve(false);
-			}
-		});
+		try {
+			return typeof gc.Protos.csgo.EGCBaseClientMsg.k_EMsgGCClientHello === "number";
+		} catch (e) {
+			return false;
+		}
 	}
 
 	deleteRecursive(dir) {

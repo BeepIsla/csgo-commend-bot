@@ -1,5 +1,6 @@
 .vscode
 node_modules
+data
 accounts.json
 config.json
 test*.js
