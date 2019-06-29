@@ -88,8 +88,8 @@ let db = undefined;
 		return;
 	}
 
-	console.log("Chunking " + accountsToUse.length + " account" + (accountsToUse.length === 1 ? "" : "s") + " into groups of 20...");
-	let chunks = helper.chunkArray(accountsToUse, 20); // Chunks are now hardcoded to 20 due to 20 commends being the limit per server
+	console.log("Chunking " + accountsToUse.length + " account" + (accountsToUse.length === 1 ? "" : "s") + " into groups of " + config.perChunk + "...");
+	let chunks = helper.chunkArray(accountsToUse, config.perChunk);
 
 	if (config.method.toUpperCase() === "LOGIN") {
 		console.log("Getting an available server");

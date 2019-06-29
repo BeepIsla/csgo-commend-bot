@@ -6,8 +6,8 @@ If you're a developer and want to know how to fix your own commend bot its very 
 # Restrictions
 Valve changed it so that you now need to *be* on a server before you can commend someone. There also is a limit of the amount of commends you can send per server, that limit is set to 20. Due to this you need your targets Steam details, so you can login and change server after 20 commends. This also **heavily** impacts speed.
 
-# **This version has a major issue**
-Typically after ~20 commends it stops working all together, despite closing Steam connection and relogging. Sometimes it works for a little more, most of the time it doesn't. You can do another 20 after restarting the script.
+# Known issues
+- Typically after 20 commends you cannot commend a person anymore for ~4-5 minutes. This is not always the case and I do not know what impacts this. I recommend leaving the `perChunk` and `betweenChunks` config values to their default.
 
 # Future
 - Add back the colors
@@ -41,9 +41,10 @@ Typically after ~20 commends it stops working all together, despite closing Stea
 - target `String`: SteamID/VanityURL/ProfileURL of target
 - serverID `String`: ServerID **or** IP of the server - [Read More](#server-id)
 - matchID `String`: Optional match ID, typically just `"0"` anyways - I always use `"0"`.
-- toSend `Number`: Amount of commends you want to send
+- toSend `Number`: Total amount of commends you want to send
+- perChunk `Number`: `toSend` will be split into parts of `perChunk` size
+- betweenChunks `Number`: Cooldown in milliseconds to wait after each part/chunk
 - cooldown `Number`: Cooldown in milliseconds to not reuse accounts - Currently set to 8 hours
-- betweenChunks `Number`: Cooldown in milliseconds between chunks - (I recommend a minimum of `240000` (4 minutes))
 - steamWebAPIKey `String`: Steam Web API key from [here](https://steamcommunity.com/dev/apikey)
 
 # Database Manager

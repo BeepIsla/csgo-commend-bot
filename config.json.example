@@ -14,7 +14,8 @@
 	"serverID": "[A:1:1621585931:12649]",
 	"matchID": "0",
 	"toSend": 40,
-	"cooldown": 28800000,
+	"perChunk": 20,
 	"betweenChunks": 300000,
+	"cooldown": 28800000,
 	"steamWebAPIKey": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
 }
