@@ -84,7 +84,7 @@ module.exports = class Helper {
 					}
 				}
 
-				fs.unlink(dir, (err) => {
+				fs.rmdir(dir, (err) => {
 					if (err) {
 						reject(err);
 						return;
