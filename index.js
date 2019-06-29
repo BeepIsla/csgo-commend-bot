@@ -10,17 +10,34 @@ const config = require("./config.json");
 process.on("unhandledRejection", console.error);
 process.on("uncaughtException", console.error);
 
+const colors = {
+	reset: "\x1b[0m",
+	black: "\x1b[30m",
+	red: "\x1b[31m",
+	green: "\x1b[32m",
+	yellow: "\x1b[33m",
+	blue: "\x1b[34m",
+	magenta: "\x1b[35m",
+	cyan: "\x1b[36m",
+	white: "\x1b[37m"
+};
 const helper = new Helper(config.steamWebAPIKey);
 let db = undefined;
 let isNewVersion = false;
+let _consolelog = console.log;
+console.log = (color, ...args) => {
+	args.unshift(colors[color] ? colors[color] : color);
+	args.push(colors.reset);
+	_consolelog(...args);
+}
 
 (async () => {
 	if ([ "LOGIN", "SERVER" ].includes(config.method.toUpperCase()) === false) {
-		console.log("The \"method\" option only allows for \"LOGIN\" or \"SERVER\" value. Please refer to the README for more information.");
+		console.log("red", "The \"method\" option only allows for \"LOGIN\" or \"SERVER\" value. Please refer to the README for more information.");
 		return;
 	}
 
-	console.log("Checking for new update...");
+	console.log("white", "Checking for new update...");
 	try {
 		let package = require("./package.json");
 
@@ -41,27 +58,27 @@ let isNewVersion = false;
 		if (package.version !== res) {
 			let repoURL = package.repository.url.split(".");
 			repoURL.pop();
-			console.log("\nA new version is available on Github @ " + repoURL.join("."));
-			console.log("Downloading is optional but recommended. Make sure to check if there are any new values to be added in your old \"config.json\"");
+			console.log("red", "\nA new version is available on Github @ " + repoURL.join("."));
+			console.log("red", "Downloading is optional but recommended. Make sure to check if there are any new values to be added in your old \"config.json\"");
 			await new Promise(p => setTimeout(p, 5000));
 		} else {
-			console.log("Up to date!");
+			console.log("green", "Up to date!");
 		}
 	} catch (err) {
 		console.error(err);
-		console.log("Failed to check for updates");
+		console.log("red", "Failed to check for updates");
 	}
 
-	console.log("Checking protobufs...");
+	console.log("white", "Checking protobufs...");
 	let foundProtobufs = helper.verifyProtobufs();
 	if (foundProtobufs === true && !isNewVersion) {
-		console.log("Found protobufs");
+		console.log("green", "Found protobufs");
 	} else {
-		console.log(isNewVersion ? "New version detected, updating protobufs..." : "Failed to find protobufs, downloading and extracting...");
+		console.log("red", isNewVersion ? "New version detected, updating protobufs..." : "Failed to find protobufs, downloading and extracting...");
 		await helper.downloadProtobufs(__dirname);
 	}
 
-	console.log("Opening database...");
+	console.log("white", "Opening database...");
 	db = await sqlite.open("./accounts.sqlite");
 
 	await Promise.all([
@@ -70,9 +87,9 @@ let isNewVersion = false;
 	]);
 
 	let amount = await db.get("SELECT COUNT(*) FROM accounts WHERE operational = 1;");
-	console.log("There are a total of " + amount["COUNT(*)"] + " operational accounts");
+	console.log("white", "There are a total of " + amount["COUNT(*)"] + " operational accounts");
 	if (amount["COUNT(*)"] < config.toSend) {
-		console.log("Not enough accounts available, got " + amount["COUNT(*)"] + "/" + config.toSend);
+		console.log("red", "Not enough accounts available, got " + amount["COUNT(*)"] + "/" + config.toSend);
 		return;
 	}
 
@@ -80,20 +97,20 @@ let isNewVersion = false;
 	let serverToUse = undefined;
 
 	if (config.method.toUpperCase() === "LOGIN") {
-		console.log("Getting an available server");
+		console.log("white", "Getting an available server");
 		serverToUse = (await helper.GetActiveServer()).shift().steamid;
 
-		console.log("Logging into target account");
+		console.log("white", "Logging into target account");
 		targetAcc = new Target(config.account.username, config.account.password, config.account.sharedSecret);
 		await targetAcc.login();
 	} else if (config.method.toUpperCase() === "SERVER") {
-		console.log("Parsing target account...");
+		console.log("white", "Parsing target account...");
 		targetAcc = (await helper.parseSteamID(config.target)).accountid;
 	}
 
 	let accountsToUse = await db.all("SELECT accounts.username, accounts.password, accounts.sharedSecret FROM accounts LEFT JOIN commended ON commended.username = accounts.username WHERE accounts.username NOT IN (SELECT username FROM commended WHERE commended = " + (typeof targetAcc === "object" ? targetAcc.accountid : targetAcc) + " OR commended.username IS NULL) AND (" + Date.now() + " - accounts.lastCommend) >= " + config.cooldown + " AND accounts.operational = 1 GROUP BY accounts.username LIMIT " + config.toSend);
 	if (accountsToUse.length < config.toSend) {
-		console.log("Not enough accounts available, got " + accountsToUse.length + "/" + config.toSend);
+		console.log("red", "Not enough accounts available, got " + accountsToUse.length + "/" + config.toSend);
 
 		if (typeof targetAcc === "object") {
 			targetAcc.logOff();
@@ -103,28 +120,28 @@ let isNewVersion = false;
 		return;
 	}
 
-	console.log("Chunking " + accountsToUse.length + " account" + (accountsToUse.length === 1 ? "" : "s") + " into groups of " + config.perChunk + "...");
+	console.log("white", "Chunking " + accountsToUse.length + " account" + (accountsToUse.length === 1 ? "" : "s") + " into groups of " + config.perChunk + "...");
 	let chunks = helper.chunkArray(accountsToUse, config.perChunk);
 
 	if (config.method.toUpperCase() === "LOGIN") {
-		console.log("Getting an available server");
+		console.log("white", "Getting an available server");
 		serverToUse = (await helper.GetActiveServer()).shift().steamid;
 		targetAcc.setGamesPlayed(serverToUse);
 	} else if (config.method.toUpperCase() === "SERVER") {
-		console.log("Parsing server input");
+		console.log("white", "Parsing server input");
 		serverToUse = await helper.parseServerID(config.serverID);
 	}
 
 	for (let i = 0; i < chunks.length; i++) {
-		console.log("Logging in on chunk " + (i + 1) + "/" + chunks.length);
+		console.log("white", "Logging in on chunk " + (i + 1) + "/" + chunks.length);
 
 		// Do commends
 		let result = await handleChunk(chunks[i], (typeof targetAcc === "object" ? targetAcc.accountid : targetAcc), serverToUse);
-		console.log("Chunk " + (i + 1) + "/" + chunks.length + " finished with " + result.success.length + " successful commend" + (result.success.length === 1 ? "" : "s") + " and " + result.error.length + " failed commend" + (result.error.length === 1 ? "" : "s"));
+		console.log("white", "Chunk " + (i + 1) + "/" + chunks.length + " finished with " + result.success.length + " successful commend" + (result.success.length === 1 ? "" : "s") + " and " + result.error.length + " failed commend" + (result.error.length === 1 ? "" : "s"));
 
 		// Wait a little bit and relog target if needed
 		if ((i + 1) < chunks.length) {
-			console.log("Waiting " + config.betweenChunks + "ms...");
+			console.log("yellow", "Waiting " + config.betweenChunks + "ms...");
 			await new Promise(r => setTimeout(r, config.betweenChunks));
 		}
 	}
@@ -135,7 +152,7 @@ let isNewVersion = false;
 	}
 
 	await db.close();
-	console.log("Done!");
+	console.log("magenta", "Done!");
 
 	// Force exit the process if it doesn't happen automatically within 15 seconds
 	setTimeout(process.exit, 15000, 1).unref();
@@ -172,12 +189,12 @@ function handleChunk(chunk, toCommend, serverSteamID) {
 			}
 
 			if (msg.type === "logging") {
-				console.log("[" + msg.username + "] Logging into Steam");
+				console.log("yellow", "[" + msg.username + "] Logging into Steam");
 				return;
 			}
 
 			if (msg.type === "loggedOn") {
-				console.log("[" + msg.username + "] Logged onto Steam - GC Time: " + new Date(msg.hello.rtime32_gc_welcome_timestamp * 1000).toLocaleString());
+				console.log("cyan", "[" + msg.username + "] Logged onto Steam - GC Time: " + new Date(msg.hello.rtime32_gc_welcome_timestamp * 1000).toLocaleString());
 				return;
 			}
 
@@ -187,13 +204,13 @@ function handleChunk(chunk, toCommend, serverSteamID) {
 				if (msg.response.response_result !== 1) {
 					res.error.push(msg.response);
 
-					console.log("[" + msg.username + "] Commended but got invalid success code " + msg.response.response_result + " (" + (res.error.length + res.success.length) + "/" + chunk.length + ")");
+					console.log("red", "[" + msg.username + "] Commended but got invalid success code " + msg.response.response_result + " (" + (res.error.length + res.success.length) + "/" + chunk.length + ")");
 					return;
 				}
 
 				res.success.push(msg.response);
 
-				console.log("[" + msg.username + "] Successfully sent a commend with response code " + msg.response.response_result + " - Remaining Commends: " + msg.response.tokens + " (" + (res.error.length + res.success.length) + "/" + chunk.length + ")");
+				console.log("green", "[" + msg.username + "] Successfully sent a commend with response code " + msg.response.response_result + " - Remaining Commends: " + msg.response.tokens + " (" + (res.error.length + res.success.length) + "/" + chunk.length + ")");
 
 				await db.run("INSERT INTO commended (username, commended, timestamp) VALUES (\"" + msg.username + "\", " + toCommend + ", " + Date.now() + ")").catch(() => { });
 				return;
@@ -202,7 +219,7 @@ function handleChunk(chunk, toCommend, serverSteamID) {
 			if (msg.type === "commendErr") {
 				res.error.push(msg.error);
 
-				console.log("[" + msg.username + "] Failed to commend (" + (res.error.length + res.success.length) + "/" + chunk.length + ")", msg.error);
+				console.log("red", "[" + msg.username + "] Failed to commend (" + (res.error.length + res.success.length) + "/" + chunk.length + ")", msg.error);
 
 				await db.run("UPDATE accounts SET lastCommend = " + Date.now() + " WHERE username = \"" + msg.username + "\"").catch(() => { });
 				return;
@@ -223,12 +240,12 @@ function handleChunk(chunk, toCommend, serverSteamID) {
 				];
 
 				if (typeof msg.error.eresult === "number" && ignoreCodes.includes(msg.error.eresult) === false) {
-					console.log("[" + msg.username + "] Failed to login (" + (res.error.length + res.success.length) + "/" + chunk.length + ")", msg.error);
+					console.log("red", "[" + msg.username + "] Failed to login (" + (res.error.length + res.success.length) + "/" + chunk.length + ")", msg.error);
 				} if (msg.error && msg.error.message === "Steam Guard required") {
-					console.log("[" + msg.username + "] Requires a Steam Guard code and has been marked as invalid (" + (res.error.length + res.success.length) + "/" + chunk.length + ")", msg.error);
+					console.log("red", "[" + msg.username + "] Requires a Steam Guard code and has been marked as invalid (" + (res.error.length + res.success.length) + "/" + chunk.length + ")", msg.error);
 					await db.run("UPDATE accounts SET operational = 0 WHERE \"username\" = \"" + msg.username + "\"");
 				} else {
-					console.log("[" + msg.username + "] Failed to login and has been marked as invalid (" + (res.error.length + res.success.length) + "/" + chunk.length + ")", msg.error);
+					console.log("red", "[" + msg.username + "] Failed to login and has been marked as invalid (" + (res.error.length + res.success.length) + "/" + chunk.length + ")", msg.error);
 					await db.run("UPDATE accounts SET operational = 0 WHERE \"username\" = \"" + msg.username + "\"");
 				}
 				return;

@@ -10,7 +10,6 @@ Valve changed it so that you now need to *be* on a server before you can commend
 - Typically after 20 commends you cannot commend a person anymore for ~4-5 minutes. This is not always the case and I do not know what impacts this. I recommend leaving the `perChunk` and `betweenChunks` config values to their default.
 
 # Future
-- Add back the colors
 - Add the ability to remove commends
 - Add the ability to commend three times with one account per 24 hours instead of once every 8 hours
 
