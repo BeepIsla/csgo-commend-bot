@@ -20,13 +20,11 @@ Valve changed it so that you now need to *be* on a server before you can commend
 
 # Installation
 1. Download this repository (Alternatively use `git` to clone recursively, then you can skip step 2)
-2. Click on the `protobufs` folder and download that as well, extract the content inside the `protobufs` folder.
-3. Put it all in a folder
-4. Open a command prompt *inside* the folder
-5. Enter `npm install`
-6. Rename `config.json.example` to `config.json` and adjust it ([See below](#config))
-7. Add accounts using the [Database Manager](#database-manager)
-8. Run `node index.js`
+2. Open a command prompt *inside* the folder
+3. Enter `npm install`
+4. Rename `config.json.example` to `config.json` and adjust it ([See below](#config))
+5. Add accounts using the [Database Manager](#database-manager)
+6. Run `node index.js`
 
 # Config
 - commend:
