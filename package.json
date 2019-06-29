@@ -16,7 +16,7 @@
   "dependencies": {
     "bytebuffer": "^5.0.1",
     "inquirer": "^6.3.1",
-    "protobufjs": "github:protobufjs/protobuf.js#ProtoBuf4",
+    "protobufjs": "^6.8.8",
     "request": "^2.88.0",
     "serialize-error": "^4.1.0",
     "sqlite": "^3.0.3",

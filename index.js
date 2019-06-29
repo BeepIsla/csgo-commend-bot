@@ -108,7 +108,7 @@ let db = undefined;
 
 		// Wait a little bit and relog target if needed
 		if ((i + 1) < chunks.length) {
-			console.log("Waiting " + config.betweenChunks + "ms and relogging account...");
+			console.log("Waiting " + config.betweenChunks + "ms...");
 			await new Promise(r => setTimeout(r, config.betweenChunks));
 		}
 	}
@@ -120,6 +120,9 @@ let db = undefined;
 
 	await db.close();
 	console.log("Done!");
+
+	// Force exit the process if it doesn't happen automatically within 15 seconds
+	setTimeout(process.exit, 15000, 1).unref();
 })();
 
 function handleChunk(chunk, toCommend, serverSteamID) {

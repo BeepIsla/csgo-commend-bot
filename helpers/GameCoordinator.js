@@ -31,6 +31,7 @@ module.exports = class GameCoordinator extends Events {
 
 					if (this.startPromise !== null) {
 						let msg = this.Protos.csgo.CMsgClientWelcome.decode(payload);
+						msg = this.Protos.csgo.CMsgClientWelcome.toObject(msg, { defaults: true });
 						this.startPromise(msg);
 						this.startPromise = null;
 					}
@@ -64,7 +65,10 @@ module.exports = class GameCoordinator extends Events {
 			}, timeout);
 
 			this._GCHelloInterval = setInterval(() => {
-				this.steamUser.sendToGC(730, this.Protos.csgo.EGCBaseClientMsg.k_EMsgGCClientHello, {} , new this.Protos.csgo.CMsgClientHello({}).toBuffer());
+				let message = this.Protos.csgo.CMsgClientHello.create({});
+				let encoded = this.Protos.csgo.CMsgClientHello.encode(message);
+
+				this.steamUser.sendToGC(730, this.Protos.csgo.EGCBaseClientMsg.k_EMsgGCClientHello, {} , encoded.finish());
 			}, 5000);
 
 			this.startPromise = resolve;
@@ -86,10 +90,16 @@ module.exports = class GameCoordinator extends Events {
 	sendMessage(appid, header, proto, protobuf, settings, responseHeader, responseProtobuf, timeout = 30000) {
 		return new Promise((resolve, reject) => {
 			if (typeof appid === "undefined") {
+				let encoded = settings;
+				if (typeof protobuf !== "undefined") {
+					let message = protobuf.create(settings);
+					encoded = protobuf.encode(message);
+				}
+
 				this.steamUser._send({
 					msg: header,
 					proto: proto
-				}, typeof protobuf === "undefined" ? settings : new protobuf(settings).toBuffer());
+				}, typeof protobuf === "undefined" ? encoded : encoded.finish());
 
 				if (typeof responseHeader === "undefined") {
 					resolve();
@@ -113,12 +123,13 @@ module.exports = class GameCoordinator extends Events {
 							return;
 						}
 
-						resolve(new responseProtobuf(body).toBuffer());
+						resolve(body);
 						return;
 					}
 
 					if (body instanceof Buffer || body instanceof ByteBuffer) {
-						body = responseProtobuf.decode(body);
+						body = responseProtobuf.decode(body)
+						body = responseProtobuf.toObject(body, { defaults: true });
 					}
 
 					resolve(body);
@@ -126,7 +137,12 @@ module.exports = class GameCoordinator extends Events {
 				return;
 			}
 
-			this.steamUser.sendToGC(appid, header, proto, typeof protobuf === "undefined" ? settings : new protobuf(settings).toBuffer());
+			let encoded = settings;
+			if (typeof protobuf !== "undefined") {
+				let message = protobuf.create(settings);
+				encoded = protobuf.encode(message);
+			}
+			this.steamUser.sendToGC(appid, header, proto, typeof protobuf === "undefined" ? encoded : encoded.finish());
 
 			if (typeof responseHeader === "undefined") {
 				resolve();
@@ -150,6 +166,7 @@ module.exports = class GameCoordinator extends Events {
 					}
 
 					let msg = responseProtobuf.decode(payload);
+					msg = responseProtobuf.toObject(msg, { defaults: true });
 					resolve(msg);
 				}
 			}
