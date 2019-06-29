@@ -3,7 +3,7 @@ const SteamTotp = require("steam-totp");
 const GameCoordinator = require("./GameCoordinator.js");
 
 module.exports = class Account {
-	constructor() {
+	constructor(isTarget = false) {
 		this.steamUser = new SteamUser({
 			autoRelogin: false,
 			enablePicsCache: false,
@@ -11,6 +11,7 @@ module.exports = class Account {
 		});
 		this.csgoUser = new GameCoordinator(this.steamUser);
 		this.loginTimeout = null;
+		this.isTarget = isTarget;
 	}
 
 	/**
@@ -47,6 +48,7 @@ module.exports = class Account {
 
 				this.steamUser.removeListener("error", error);
 				this.steamUser.removeListener("loggedOn", loggedOn);
+				this.steamUser.removeListener("steamGuard", steamGuard);
 
 				reject(err);
 			};
@@ -62,12 +64,28 @@ module.exports = class Account {
 
 				this.steamUser.removeListener("error", error);
 				this.steamUser.removeListener("loggedOn", loggedOn);
+				this.steamUser.removeListener("steamGuard", steamGuard);
 
 				this.csgoUser.start().then(resolve).catch(reject);
 			};
 
+			let steamGuard = () => {
+				clearTimeout(this.loginTimeout);
+				this.loginTimeout = null;
+
+				this.steamUser.removeListener("error", error);
+				this.steamUser.removeListener("loggedOn", loggedOn);
+				this.steamUser.removeListener("steamGuard", steamGuard);
+
+				reject(new Error("Steam Guard required"));
+			}
+
 			this.steamUser.on("error", error);
-			this.steamUser.on("loggedOn", loggedOn);;
+			this.steamUser.on("loggedOn", loggedOn);
+
+			if (!this.isTarget) {
+				this.steamUser.on("steamGuard", steamGuard);
+			}
 		});
 	}
 

@@ -9,7 +9,7 @@ let sg_callback = null;
 
 (async () => {
 	try {
-		let acc = new Account();
+		let acc = new Account(true);
 
 		process.on("message", (msg) => {
 			if (msg.type === "end") {
