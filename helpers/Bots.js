@@ -8,7 +8,7 @@ let started = false;
 		type: "ready"
 	});
 
-	while (started === false) {
+	while (!started) {
 		await new Promise(r => setTimeout(r, 1000));
 	}
 })();

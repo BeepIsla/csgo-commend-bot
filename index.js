@@ -71,7 +71,7 @@ console.log = (color, ...args) => {
 
 	console.log("white", "Checking protobufs...");
 	let foundProtobufs = helper.verifyProtobufs();
-	if (foundProtobufs === true && !isNewVersion) {
+	if (foundProtobufs && !isNewVersion) {
 		console.log("green", "Found protobufs");
 	} else {
 		console.log("red", isNewVersion ? "New version detected, updating protobufs..." : "Failed to find protobufs, downloading and extracting...");
@@ -112,7 +112,7 @@ console.log = (color, ...args) => {
 	if (accountsToUse.length < config.toSend) {
 		console.log("red", "Not enough accounts available, got " + accountsToUse.length + "/" + config.toSend);
 
-		if (typeof targetAcc === "object") {
+		if (targetAcc instanceof Target) {
 			targetAcc.logOff();
 		}
 
@@ -136,7 +136,7 @@ console.log = (color, ...args) => {
 		console.log("white", "Logging in on chunk " + (i + 1) + "/" + chunks.length);
 
 		// Do commends
-		let result = await handleChunk(chunks[i], (typeof targetAcc === "object" ? targetAcc.accountid : targetAcc), serverToUse);
+		let result = await handleChunk(chunks[i], (targetAcc instanceof Target ? targetAcc.accountid : targetAcc), serverToUse);
 		console.log("white", "Chunk " + (i + 1) + "/" + chunks.length + " finished with " + result.success.length + " successful commend" + (result.success.length === 1 ? "" : "s") + " and " + result.error.length + " failed commend" + (result.error.length === 1 ? "" : "s"));
 
 		// Wait a little bit and relog target if needed
@@ -147,7 +147,7 @@ console.log = (color, ...args) => {
 	}
 
 	// We are done here!
-	if (typeof targetAcc === "object") {
+	if (targetAcc instanceof Target) {
 		targetAcc.logOff();
 	}
 
@@ -239,7 +239,7 @@ function handleChunk(chunk, toCommend, serverSteamID) {
 					SteamUser.EResult.IPBanned
 				];
 
-				if (typeof msg.error.eresult === "number" && ignoreCodes.includes(msg.error.eresult) === false) {
+				if (typeof msg.error.eresult === "number" && !ignoreCodes.includes(msg.error.eresult)) {
 					console.log("red", "[" + msg.username + "] Failed to login (" + (res.error.length + res.success.length) + "/" + chunk.length + ")", msg.error);
 				} if (msg.error && msg.error.message === "Steam Guard required") {
 					console.log("red", "[" + msg.username + "] Requires a Steam Guard code and has been marked as invalid (" + (res.error.length + res.success.length) + "/" + chunk.length + ")", msg.error);

@@ -14,7 +14,7 @@ module.exports = class Helper {
 	downloadProtobufs(dir) {
 		return new Promise(async (resolve, reject) => {
 			let newProDir = path.join(dir, "Protobufs-master");
-			if (fs.existsSync(newProDir) === true) {
+			if (fs.existsSync(newProDir)) {
 				await this.deleteRecursive(newProDir);
 			}
 
@@ -24,7 +24,7 @@ module.exports = class Helper {
 			let pipe = r.pipe(unzipper.Extract({ path: dir }));
 			pipe.on("close", async () => {
 				let proDir = path.join(dir, "protobufs");
-				if (fs.existsSync(proDir) === true) {
+				if (fs.existsSync(proDir)) {
 					await this.deleteRecursive(proDir);
 				}
 
@@ -64,7 +64,7 @@ module.exports = class Helper {
 					let filePath = path.join(dir, file);
 					let stat = fs.statSync(filePath);
 
-					if (stat.isDirectory() === true) {
+					if (stat.isDirectory()) {
 						await this.deleteRecursive(filePath);
 					} else {
 						await new Promise((res, rej) => {
@@ -96,7 +96,7 @@ module.exports = class Helper {
 		return new Promise(async (resolve, reject) => {
 			let json = await this.GetJSON("https://raw.githubusercontent.com/BeepFelix/csgo-commend-bot/master/package.json");
 
-			if (typeof json.version !== "string") {
+			if (!json.version) {
 				reject(json);
 				return;
 			}
@@ -108,7 +108,7 @@ module.exports = class Helper {
 	GetCurrentVersion(appid) {
 		return new Promise(async (resolve, reject) => {
 			let json = await this.GetJSON("https://api.steampowered.com/ISteamApps/UpToDateCheck/v1/?format=json&appid=" + appid + "&version=0");
-			if (typeof json.response !== "object") {
+			if (!json.response) {
 				reject(json);
 				return;
 			}
@@ -120,7 +120,7 @@ module.exports = class Helper {
 	parseSteamID(input) {
 		return new Promise((resolve, reject) => {
 			let parsed = input.match(/^(((http(s){0,1}:\/\/){0,1}(www\.){0,1})steamcommunity\.com\/(id|profiles)\/){0,1}(?<parsed>[A-Z0-9-_]+)(\/{0,1}.{0,})$/i);
-			if (parsed === null) {
+			if (!parsed) {
 				reject(new Error("Failed to parse SteamID"));
 				return;
 			}
@@ -128,18 +128,18 @@ module.exports = class Helper {
 			let sid = undefined;
 			try {
 				sid = new SteamID(parsed.groups.parsed);
-				if (sid.isValid() === true && sid.instance === 1 && sid.type === 1 && sid.universe === 1) {
+				if (sid.isValid() && sid.instance === 1 && sid.type === 1 && sid.universe === 1) {
 					resolve(sid);
 				}
 			} catch (e) { }
 
 			// If all of this is true the above one resolved
-			if (sid !== undefined && sid.isValid() === true && sid.instance === 1 && sid.type === 1 && sid.universe === 1) {
+			if (sid && sid.isValid() && sid.instance === 1 && sid.type === 1 && sid.universe === 1) {
 				return;
 			}
 
 			this.vanityURL(parsed.groups.parsed).then((res) => {
-				if (typeof res.steamid !== "string") {
+				if (!res.steamid) {
 					reject(new Error("Invalid Vanity URL"));
 					return;
 				}
@@ -176,7 +176,7 @@ module.exports = class Helper {
 				sid = new SteamID(id);
 			} catch (e) { }
 
-			if (typeof sid !== "undefined" && sid.isValid() === true && [3, 4].includes(sid.type) === true && sid.universe === 1) {
+			if (sid && sid.isValid() && [3, 4].includes(sid.type) && sid.universe === 1) {
 				resolve(sid.getSteamID64());
 				return;
 			}
@@ -188,7 +188,7 @@ module.exports = class Helper {
 					"response",
 					"servers"
 				], Array.isArray).then((res) => {
-					if (typeof res[0].steamid !== "string") {
+					if (!res[0].steamid) {
 						reject(new Error("Invalid Server IP"));
 						return;
 					}
@@ -218,7 +218,7 @@ module.exports = class Helper {
 					json = JSON.parse(body);
 				} catch (e) { };
 
-				if (json === undefined) {
+				if (!json) {
 					reject(body);
 					return;
 				}
@@ -244,7 +244,7 @@ function doRequest(method, version, qsParams = {}, responsePath = [], validator)
 	return new Promise(async (resolve, reject) => {
 		qs = qsParams;
 
-		if (typeof qs.key !== "string") {
+		if (!qs.key) {
 			qs.key = this.apiKey;
 		}
 
@@ -258,7 +258,7 @@ function doRequest(method, version, qsParams = {}, responsePath = [], validator)
 			}
 
 			if (res.statusCode !== 200) {
-				if (res.statusCode == 403) {
+				if (res.statusCode === 403) {
 					reject({
 						type: "FORBIDDEN",
 						key: qs.key
@@ -275,7 +275,7 @@ function doRequest(method, version, qsParams = {}, responsePath = [], validator)
 				json = JSON.parse(body);
 			} catch (e) { };
 
-			if (json === undefined) {
+			if (!json) {
 				reject(body);
 				return;
 			}
@@ -283,7 +283,7 @@ function doRequest(method, version, qsParams = {}, responsePath = [], validator)
 			// Validate the response
 			if (responsePath.length > 0) {
 				let valid = check(json, responsePath, 0, validator);
-				if (valid === false) {
+				if (!valid) {
 					reject(json);
 					return;
 				}
@@ -299,7 +299,7 @@ function doRequest(method, version, qsParams = {}, responsePath = [], validator)
 
 function check(json, verifyPath, i, validator) {
 	if (i >= verifyPath.length) {
-		if (typeof validator === "function" && validator(json) === false) {
+		if (validator && !validator(json)) {
 			return false;
 		}
 

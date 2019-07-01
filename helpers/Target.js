@@ -36,7 +36,7 @@ module.exports = class Target {
 					let r = await inquirer.prompt({
 						type: "input",
 						name: "code",
-						message: "Steam Guard Code (" + (typeof msg.domain === "string" ? msg.domain : "Mobile") + ")"
+						message: "Steam Guard Code (" + (msg.domain ? msg.domain : "Mobile") + ")"
 					});
 
 					this.childProcess.send({
@@ -47,7 +47,7 @@ module.exports = class Target {
 				}
 
 				if (msg.type === "loggedOn") {
-					if (typeof this._res_loggedOn !== "function") {
+					if (!this._res_loggedOn) {
 						return;
 					}
 
@@ -59,7 +59,7 @@ module.exports = class Target {
 				}
 
 				if (msg.type === "error") {
-					if (typeof this._rej_error !== "function") {
+					if (!this._rej_error) {
 						console.error(msg.error);
 						return;
 					}
@@ -71,7 +71,7 @@ module.exports = class Target {
 				}
 
 				if (msg.type === "disconnected") {
-					if (typeof this._res_disconnected !== "function") {
+					if (!this._res_disconnected) {
 						return;
 					}
 

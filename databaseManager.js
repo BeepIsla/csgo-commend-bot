@@ -44,7 +44,7 @@ const helper = new Helper(config.steamWebAPIKey);
 					message: "Are you sure you want to remove ALL entries in the database?"
 				});
 
-				if (confirm.confirm !== true) {
+				if (!confirm.confirm) {
 					break;
 				}
 
@@ -91,7 +91,7 @@ const helper = new Helper(config.steamWebAPIKey);
 
 					let filePath = selection.selection === "Import from JSON file" ? (path.join(__dirname, file.file.endsWith(".json") ? file.file : (file.file + ".json"))) : (path.join(__dirname, file.file.endsWith(".txt") ? file.file : (file.file + ".txt")));
 
-					if (fs.existsSync(filePath) === false) {
+					if (!fs.existsSync(filePath)) {
 						console.log("Failed to find file at \"" + filePath + "\"");
 						break;
 					}
@@ -165,7 +165,7 @@ const helper = new Helper(config.steamWebAPIKey);
 				});
 
 				let sid = await helper.parseSteamID(input.input).catch(() => {});
-				if (typeof sid === "undefined") {
+				if (!sid) {
 					console.log("Failed to find SteamID of input");
 					break;
 				}
@@ -183,7 +183,7 @@ const helper = new Helper(config.steamWebAPIKey);
 				});
 
 				let sid = await helper.parseSteamID(input.input).catch(() => {});
-				if (typeof sid === "undefined") {
+				if (!sid) {
 					console.log("Failed to find SteamID of input");
 					break;
 				}
@@ -213,7 +213,7 @@ const helper = new Helper(config.steamWebAPIKey);
 				});
 
 				let filePath = path.join(__dirname, input.input.includes(".") ? input.input : (input.input + ".txt"));
-				if (fs.existsSync(filePath) === true) {
+				if (fs.existsSync(filePath)) {
 					console.log("File already exists.");
 					break;
 				}
