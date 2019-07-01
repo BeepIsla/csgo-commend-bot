@@ -24,6 +24,8 @@ const colors = {
 const helper = new Helper(config.steamWebAPIKey);
 let db = undefined;
 let isNewVersion = false;
+let totalSuccess = 0;
+let totalFail = 0;
 let _consolelog = console.log;
 console.log = (color, ...args) => {
 	args.unshift(colors[color] ? colors[color] : color);
@@ -137,6 +139,10 @@ console.log = (color, ...args) => {
 
 		// Do commends
 		let result = await handleChunk(chunks[i], (targetAcc instanceof Target ? targetAcc.accountid : targetAcc), serverToUse);
+
+		totalSuccess += result.success.length;
+		totalFail += result.error.length;
+
 		console.log("white", "Chunk " + (i + 1) + "/" + chunks.length + " finished with " + result.success.length + " successful commend" + (result.success.length === 1 ? "" : "s") + " and " + result.error.length + " failed commend" + (result.error.length === 1 ? "" : "s"));
 
 		// Wait a little bit and relog target if needed
@@ -152,7 +158,7 @@ console.log = (color, ...args) => {
 	}
 
 	await db.close();
-	console.log("magenta", "Done!");
+	console.log("magenta", "Finished all chunks with a total of " + totalSuccess + " successful and " + totalFail + " failed commend" + (totalFail === 1 ? "" : "s"));
 
 	// Force exit the process if it doesn't happen automatically within 15 seconds
 	setTimeout(process.exit, 15000, 1).unref();
