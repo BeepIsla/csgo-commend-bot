@@ -1,286 +1,265 @@
+const sqlite = require("sqlite");
+const ChildProcess = require("child_process");
+const path = require("path");
+const SteamUser = require("steam-user");
 const fs = require("fs");
-const SteamIDParser = require("./helpers/steamIDParser.js");
-const Account = require("./helpers/account.js");
+const Target = require("./helpers/Target.js");
+const Helper = require("./helpers/Helper.js");
 const config = require("./config.json");
+
+process.on("unhandledRejection", console.error);
+process.on("uncaughtException", console.error);
+
 const colors = {
-	general: "\x1b[37m",
-	login: "\x1b[36m",
-	loggedIn: "\x1b[33m",
-	connectedToGC: "\x1b[35m",
-	success: "\x1b[32m",
-	error: "\x1b[31m"
+	reset: "\x1b[0m",
+	black: "\x1b[30m",
+	red: "\x1b[31m",
+	green: "\x1b[32m",
+	yellow: "\x1b[33m",
+	blue: "\x1b[34m",
+	magenta: "\x1b[35m",
+	cyan: "\x1b[36m",
+	white: "\x1b[37m"
 };
-
-// Shittily parse command line arguments
-if (process.argv[2]) {
-	config.AccountToCommend = process.argv[2];
+const helper = new Helper(config.steamWebAPIKey);
+let db = undefined;
+let isNewVersion = false;
+let totalSuccess = 0;
+let totalFail = 0;
+let _consolelog = console.log;
+console.log = (color, ...args) => {
+	args.unshift(colors[color] ? colors[color] : color);
+	args.push(colors.reset);
+	_consolelog(...args);
 }
-
-if (process.argv[3]) {
-	try {
-		if (!isNaN(parseInt(process.argv[3]))) {
-			config.CommendsToSend = parseInt(process.argv[3]);
-		} else {
-			throw new Error("Not a number");
-		}
-	} catch(e) {
-		console.log(colors.error + "Failed to parse CommendsToSend via command line argument");
-	};
-}
-
-// Add all accounts to the config
-config.accounts = require("./accounts.json");
-
-var curProxy = -1;
-var proxyChunk = 0;
-var commendsSent = 0;
-var commendsFailed = 0;
-var chunkComplete = 0;
-var chunkCompleteLimit = -1;
-var hitRatelimit = false;
 
 (async () => {
-	// Parse "AccountToCommend" to accountID
-	console.log(colors.general + "Parsing account from " + config.AccountToCommend);
-
-	var output = await SteamIDParser(config.AccountToCommend, config.SteamAPIKey).catch((err) => {
-		console.error(err);
-	});
-
-	// An error occured
-	if (!output) {
+	if ([ "LOGIN", "SERVER" ].includes(config.method.toUpperCase()) === false) {
+		console.log("red", "The \"method\" option only allows for \"LOGIN\" or \"SERVER\" value. Please refer to the README for more information.");
 		return;
 	}
 
-	config.AccountToCommend = output.accountid;
+	console.log("white", "Checking for new update...");
+	try {
+		let package = require("./package.json");
 
-	console.log(colors.general + "Successfully parsed account to " + config.AccountToCommend);
-
-	console.log(colors.general + "Getting " + config.CommendsToSend + " account" + (config.CommendsToSend === 1 ? "" : "s"));
-
-	// First we get all available accounts (You can commend once every 12 hours)
-	var available = config.accounts.filter(a => a.operational === true && a.requiresSteamGuard === false && !a.commended.includes(config.AccountToCommend) && (new Date().getTime() - a.lastCommend) >= config.AccountCooldown);
-
-	// Check if we have enough available accounts
-	if (available.length < config.CommendsToSend) {
-		console.log(colors.general + available.length + "/" + config.accounts.length + " account" + (config.accounts.length === 1 ? "" : "s") + " available but we need " + config.CommendsToSend + " account" + (config.CommendsToSend === 1 ? "" : "s"));
-		return;
-	}
-
-	// Get needed accounts
-	var accountsToUse = available.slice(0, config.CommendsToSend);
-
-	// Split accounts into chunks, do "CommendsPerChunk" at a time
-	var chunks = chunkArray(accountsToUse, config.Chunks.CommendsPerChunk);
-
-	// Wait 5 seconds before starting the actual process
-	await new Promise(r => setTimeout(r, (5 * 1000)));
-
-	// Go through all chunks, use await to slow it down
-	for (let chunk of chunks) {
-		// If we previously hit the ratelimit then wait "RateLimitedCooldown" ms
-		if (hitRatelimit === true) {
-			console.log(colors.general + "We have hit the ratelimit, waiting " + config.RateLimitedCooldown + "ms");
-			await new Promise(r => setTimeout(r, config.RateLimitedCooldown));
-		}
-
-		chunkCompleteLimit = chunk.length;
-
-		// Do 100 at once and await until they are done
-		var result = await new Promise((resolve, reject) => {
-			// We are doing a new chunk, set the "hitRatelimit" to false
-			hitRatelimit = false;
-
-			for (let account of chunk) {
-				accountHandler(account, resolve);
+		if (!fs.existsSync("./data/dev")) {
+			if (fs.existsSync("./data/version")) {
+				let version = fs.readFileSync("./data/version").toString();
+				isNewVersion = version !== package.version;
 			}
-		});
+	
+			if (!fs.existsSync("./data")) {
+				fs.mkdirSync("./data");
+			}
+			fs.writeFileSync("./data/version", package.version);
+		}
 
-		// Increase our proxyChunk count
-		proxyChunk++;
+		let res = await helper.GetLatestVersion().catch(console.error);
 
-		// If the result is "true" that means we have another one to do, if its false it means we are at the end and dont need to wait more
-		if (result === true) {
-			// Wait "BeautifyDelay" ms so the message actually appears at the bottom and not somewhere in the middle
-			await new Promise(r => setTimeout(r, config.Chunks.BeautifyDelay));
+		if (package.version !== res) {
+			let repoURL = package.repository.url.split(".");
+			repoURL.pop();
+			console.log("red", "\nA new version is available on Github @ " + repoURL.join("."));
+			console.log("red", "Downloading is optional but recommended. Make sure to check if there are any new values to be added in your old \"config.json\"");
+			await new Promise(p => setTimeout(p, 5000));
+		} else {
+			console.log("green", "Up to date!");
+		}
+	} catch (err) {
+		console.error(err);
+		console.log("red", "Failed to check for updates");
+	}
 
-			console.log(colors.general + "Waiting " + parseInt(config.Chunks.TimeBetweenChunks / 1000) + " second" + (parseInt(config.Chunks.TimeBetweenChunks / 60) === 1 ? "" : "s"));
+	console.log("white", "Checking protobufs...");
+	let foundProtobufs = helper.verifyProtobufs();
+	if (foundProtobufs && !isNewVersion) {
+		console.log("green", "Found protobufs");
+	} else {
+		console.log("red", isNewVersion ? "New version detected, updating protobufs..." : "Failed to find protobufs, downloading and extracting...");
+		await helper.downloadProtobufs(__dirname);
+	}
 
-			// Wait 60 seconds and then repeat the loop
-			await new Promise(r => setTimeout(r, config.Chunks.TimeBetweenChunks));
+	console.log("white", "Opening database...");
+	db = await sqlite.open("./accounts.sqlite");
+
+	await Promise.all([
+		db.run("CREATE TABLE IF NOT EXISTS \"accounts\" (\"username\" TEXT NOT NULL UNIQUE, \"password\" TEXT NOT NULL, \"sharedSecret\" TEXT, \"lastCommend\" INTEGER NOT NULL DEFAULT -1, \"operational\" NUMERIC NOT NULL DEFAULT 1, PRIMARY KEY(\"username\"))"),
+		db.run("CREATE TABLE IF NOT EXISTS \"commended\" (\"username\" TEXT NOT NULL REFERENCES accounts(username), \"commended\" INTEGER NOT NULL, \"timestamp\" INTEGER NOT NULL)")
+	]);
+
+	let amount = await db.get("SELECT COUNT(*) FROM accounts WHERE operational = 1;");
+	console.log("white", "There are a total of " + amount["COUNT(*)"] + " operational accounts");
+	if (amount["COUNT(*)"] < config.toSend) {
+		console.log("red", "Not enough accounts available, got " + amount["COUNT(*)"] + "/" + config.toSend);
+		return;
+	}
+
+	let targetAcc = undefined;
+	let serverToUse = undefined;
+
+	if (config.method.toUpperCase() === "LOGIN") {
+		console.log("white", "Getting an available server");
+		serverToUse = (await helper.GetActiveServer()).shift().steamid;
+
+		console.log("white", "Logging into target account");
+		targetAcc = new Target(config.account.username, config.account.password, config.account.sharedSecret);
+		await targetAcc.login();
+	} else if (config.method.toUpperCase() === "SERVER") {
+		console.log("white", "Parsing target account...");
+		targetAcc = (await helper.parseSteamID(config.target)).accountid;
+	}
+
+	let accountsToUse = await db.all("SELECT accounts.username, accounts.password, accounts.sharedSecret FROM accounts LEFT JOIN commended ON commended.username = accounts.username WHERE accounts.username NOT IN (SELECT username FROM commended WHERE commended = " + (typeof targetAcc === "object" ? targetAcc.accountid : targetAcc) + " OR commended.username IS NULL) AND (" + Date.now() + " - accounts.lastCommend) >= " + config.cooldown + " AND accounts.operational = 1 GROUP BY accounts.username LIMIT " + config.toSend);
+	if (accountsToUse.length < config.toSend) {
+		console.log("red", "Not enough accounts available, got " + accountsToUse.length + "/" + config.toSend);
+
+		if (targetAcc instanceof Target) {
+			targetAcc.logOff();
+		}
+
+		await db.close();
+		return;
+	}
+
+	console.log("white", "Chunking " + accountsToUse.length + " account" + (accountsToUse.length === 1 ? "" : "s") + " into groups of " + config.perChunk + "...");
+	let chunks = helper.chunkArray(accountsToUse, config.perChunk);
+
+	if (config.method.toUpperCase() === "LOGIN") {
+		console.log("white", "Getting an available server");
+		serverToUse = (await helper.GetActiveServer()).shift().steamid;
+		targetAcc.setGamesPlayed(serverToUse);
+	} else if (config.method.toUpperCase() === "SERVER") {
+		console.log("white", "Parsing server input");
+		serverToUse = await helper.parseServerID(config.serverID);
+	}
+
+	for (let i = 0; i < chunks.length; i++) {
+		console.log("white", "Logging in on chunk " + (i + 1) + "/" + chunks.length);
+
+		// Do commends
+		let result = await handleChunk(chunks[i], (targetAcc instanceof Target ? targetAcc.accountid : targetAcc), serverToUse);
+
+		totalSuccess += result.success.length;
+		totalFail += result.error.length;
+
+		console.log("white", "Chunk " + (i + 1) + "/" + chunks.length + " finished with " + result.success.length + " successful commend" + (result.success.length === 1 ? "" : "s") + " and " + result.error.length + " failed commend" + (result.error.length === 1 ? "" : "s"));
+
+		// Wait a little bit and relog target if needed
+		if ((i + 1) < chunks.length) {
+			console.log("yellow", "Waiting " + config.betweenChunks + "ms...");
+			await new Promise(r => setTimeout(r, config.betweenChunks));
 		}
 	}
+
+	// We are done here!
+	if (targetAcc instanceof Target) {
+		targetAcc.logOff();
+	}
+
+	await db.close();
+	console.log("magenta", "Finished all chunks with a total of " + totalSuccess + " successful and " + totalFail + " failed commend" + (totalFail === 1 ? "" : "s"));
+
+	// Force exit the process if it doesn't happen automatically within 15 seconds
+	setTimeout(process.exit, 15000, 1).unref();
 })();
 
-function accountHandler(account, resolve) {
-	try {
-		console.log(colors.login + "[" + account.username + "] Logging into account");
-
-		const acc = new Account(account.username, account.password, account.sharedSecret, getProxy());
-
-		acc.on("loggedOn", () => {
-			console.log(colors.loggedIn + "[" + account.username + "] Successfully logged into account");
+function handleChunk(chunk, toCommend, serverSteamID) {
+	return new Promise(async (resolve, reject) => {
+		let child = ChildProcess.fork("./Bots.js", [], {
+			cwd: path.join(__dirname, "helpers"),
+			execArgv: process.execArgv.join(" ").includes("--inspect") ? ["--inspect=0"] : []
 		});
 
-		acc.on("ready", async (hello) => {
-			console.log(colors.connectedToGC + "[" + account.username + "] Connected to CSGO GameCoordinator");
+		child.on("error", console.error);
 
-			// Wait "TimeBetweenConnectionAndSending" ms before sending the commend
-			await new Promise(r => setTimeout(r, config.Chunks.TimeBetweenConnectionAndSending));
+		let res = {
+			success: [],
+			error: []
+		};
 
-			acc.commend(config.AccountToCommend, (30 * 1000), config.Commend.Friendly, config.Commend.Teacher, config.Commend.Leader).then((response) => {
-				commendsSent += 1;
+		child.on("message", async (msg) => {
+			if (msg.type === "ready") {
+				child.send({
+					config: config,
+					chunk: chunk,
+					toCommend: toCommend,
+					serverSteamID: serverSteamID
+				});
+				return; 
+			}
 
-				console.log(colors.success + "[" + account.username + "] Successfully sent a commend " + commendsSent + "/" + config.CommendsToSend);
+			if (msg.type === "error") {
+				console.error("The child has exited due to an error", msg.error);
+				return;
+			}
 
-				acc.logout();
+			if (msg.type === "logging") {
+				console.log("yellow", "[" + msg.username + "] Logging into Steam");
+				return;
+			}
 
-				var index = config.accounts.map(a => a.username).indexOf(account.username);
-				if (index >= 0) {
-					config.accounts[index].lastCommend = new Date().getTime();
-					config.accounts[index].commended.push(config.AccountToCommend);
-				}
+			if (msg.type === "loggedOn") {
+				console.log("cyan", "[" + msg.username + "] Logged onto Steam - GC Time: " + new Date(msg.hello.rtime32_gc_welcome_timestamp * 1000).toLocaleString());
+				return;
+			}
 
-				delete acc;
-				checkComplete(resolve);
-			}).catch((err) => {
-				// Commending while not even being connected to the GC... Makes sense
-				if (typeof err === "string" && err === "previously_timed_out") {
+			if (msg.type === "commended") {
+				await db.run("UPDATE accounts SET lastCommend = " + Date.now() + " WHERE username = \"" + msg.username + "\"").catch(() => { });
+
+				if (msg.response.response_result !== 1) {
+					res.error.push(msg.response);
+
+					console.log("red", "[" + msg.username + "] Commended but got invalid success code " + msg.response.response_result + " (" + (res.error.length + res.success.length) + "/" + chunk.length + ")");
 					return;
 				}
 
-				commendsFailed += 1;
+				res.success.push(msg.response);
 
-				console.log(colors.error + "[" + account.username + "] Has encountered an error");
-				console.error(err);
+				console.log("green", "[" + msg.username + "] Successfully sent a commend with response code " + msg.response.response_result + " - Remaining Commends: " + msg.response.tokens + " (" + (res.error.length + res.success.length) + "/" + chunk.length + ")");
 
-				acc.logout();
+				await db.run("INSERT INTO commended (username, commended, timestamp) VALUES (\"" + msg.username + "\", " + toCommend + ", " + Date.now() + ")").catch(() => { });
+				return;
+			}
 
-				var index = config.accounts.map(a => a.username).indexOf(account.username);
-				if (index >= 0) {
-					config.accounts[index].lastCommend = new Date().getTime();
-					config.accounts[index].commended.push(config.AccountToCommend);
+			if (msg.type === "commendErr") {
+				res.error.push(msg.error);
+
+				console.log("red", "[" + msg.username + "] Failed to commend (" + (res.error.length + res.success.length) + "/" + chunk.length + ")", msg.error);
+
+				await db.run("UPDATE accounts SET lastCommend = " + Date.now() + " WHERE username = \"" + msg.username + "\"").catch(() => { });
+				return;
+			}
+
+			if (msg.type === "failLogin") {
+				res.error.push(msg.error);
+
+				let ignoreCodes = [
+					SteamUser.EResult.Fail,
+					SteamUser.EResult.InvalidPassword,
+					SteamUser.EResult.AccessDenied,
+					SteamUser.EResult.Banned,
+					SteamUser.EResult.AccountNotFound,
+					SteamUser.EResult.Suspended,
+					SteamUser.EResult.AccountLockedDown,
+					SteamUser.EResult.IPBanned
+				];
+
+				if (typeof msg.error.eresult === "number" && !ignoreCodes.includes(msg.error.eresult)) {
+					console.log("red", "[" + msg.username + "] Failed to login (" + (res.error.length + res.success.length) + "/" + chunk.length + ")", msg.error);
+				} if (msg.error && msg.error.message === "Steam Guard required") {
+					console.log("red", "[" + msg.username + "] Requires a Steam Guard code and has been marked as invalid (" + (res.error.length + res.success.length) + "/" + chunk.length + ")", msg.error);
+					await db.run("UPDATE accounts SET operational = 0 WHERE \"username\" = \"" + msg.username + "\"");
+				} else {
+					console.log("red", "[" + msg.username + "] Failed to login and has been marked as invalid (" + (res.error.length + res.success.length) + "/" + chunk.length + ")", msg.error);
+					await db.run("UPDATE accounts SET operational = 0 WHERE \"username\" = \"" + msg.username + "\"");
 				}
-
-				delete acc;
-				checkComplete(resolve);
-			});
+				return;
+			}
 		});
 
-		acc.on("steamGuard", () => {
-			commendsFailed += 1;
-
-			console.log(colors.error + "[" + account.username + "] Requires a SteamGuard code");
-
-			var index = config.accounts.map(a => a.username).indexOf(account.username);
-			if (index >= 0) {
-				config.accounts[index].requiresSteamGuard = true;
-			}
-
-			acc.logout();
-
-			delete acc;
-			checkComplete(resolve);
+		child.on("exit", () => {
+			resolve(res);
 		});
-
-		acc.on("error", (err) => {
-			commendsFailed += 1;
-
-			console.log(colors.error + "[" + account.username + "] Has encountered an error");
-			console.error(err);
-
-			if (err.eresult === 84) {
-				// we have hit the ratelimit set "hitRatelimit" to true
-				hitRatelimit = true;
-			}
-
-			var index = config.accounts.map(a => a.username).indexOf(account.username);
-			if (index >= 0) {
-				// If the error is "RateLimitExceeded" just ignore it, we can still use the account just fine after the ratelimit is over
-				config.accounts[index].operational = isNaN(err.eresult) ? false : (err.eresult === 84 ? true : err.eresult);
-			}
-
-			acc.logout();
-
-			delete acc;
-			checkComplete(resolve);
-		});
-	} catch(err) {
-		commendsFailed += 1;
-
-		if (account) {
-			console.log(colors.error +"[" + account.username + "] Has encountered an error");
-
-			var index = config.accounts.map(a => a.username).indexOf(account.username);
-			if (index >= 0) {
-				config.accounts[index].operational = isNaN(err.eresult) ? false : err.eresult;
-			}
-		}
-
-		console.error(err);
-
-		if (typeof acc !== "undefined") {
-			acc.logout();
-		}
-
-		delete acc;
-		checkComplete(resolve);
-	}
-}
-
-function checkComplete(resolve) {
-	// Always increment this, as everytime we check one has finished (successfully or not doesnt matter in this case)
-	chunkComplete++;
-
-	// Global complete
-	if ((commendsSent + commendsFailed) >= config.CommendsToSend) {
-		resolve(false);
-
-		// Update our accounts.json
-		fs.writeFileSync("./accounts.json", JSON.stringify(config.accounts, null, 4));
-
-		// We have successfully sent all commends and are now done here
-		console.log(colors.general + "Successfully sent " + commendsSent + "/" + config.CommendsToSend + " commend" + (config.CommendsToSend === 1 ? "" : "s") + ", " + commendsFailed + " commend" + (commendsFailed === 1 ? "" : "s") + " failed");
-		return;
-	}
-
-	// Chunk complete
-	if (chunkComplete >= chunkCompleteLimit) {
-		// Write on every completed chunk
-		fs.writeFileSync("./accounts.json", JSON.stringify(config.accounts, null, 4));
-
-		resolve(true);
-	}
-}
-
-function getProxy() {
-	// If "config.Chunks.SwitchProxyEvery" many chunks have passed we switch to the next one
-	if (proxyChunk >= config.Chunks.SwitchProxyEvery) {
-		proxyChunk = 0;
-		curProxy += 1;
-	}
-
-	// If we are outside the array bounds go back to 0
-	if (!config.Proxies[curProxy]) {
-		curProxy = 0;
-	}
-
-	// If we are still outside the array bounds despite being at 0 then no list is defined
-	if (!config.Proxies[curProxy]) {
-		return undefined;
-	}
-
-	return config.Proxies[curProxy];
-}
-
-// Copied from: https://ourcodeworld.com/articles/read/278/how-to-split-an-array-into-chunks-of-the-same-size-easily-in-javascript
-function chunkArray(myArray, chunk_size) {
-	var tempArray = [];
-
-	for (let index = 0; index < myArray.length; index += chunk_size) {
-		myChunk = myArray.slice(index, index + chunk_size);
-		tempArray.push(myChunk);
-	}
-
-	return tempArray;
+	});
 }

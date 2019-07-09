@@ -1,7 +1,7 @@
 {
   "name": "csgo-commend-bot",
   "version": "1.0.0",
-  "description": "Simple commend bot written in JavaScript",
+  "description": "Experimental csgo commend bot rewrite",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -9,13 +9,20 @@
   "keywords": [],
   "author": "github.com/BeepFelix",
   "license": "AGPL-3.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/BeepFelix/csgo-commend-bot.git"
+  },
   "dependencies": {
+    "bytebuffer": "^5.0.1",
+    "inquirer": "^6.3.1",
+    "protobufjs": "^6.8.8",
     "request": "^2.88.0",
-    "steam": "^1.4.0",
-    "steam-client": "^2.5.8",
+    "serialize-error": "^4.1.0",
+    "sqlite": "^3.0.3",
     "steam-totp": "^2.1.0",
-    "steam-user": "^3.29.1",
-    "steamcommunity": "^3.38.0",
-    "steamid": "^1.1.0"
+    "steam-user": "^4.8.0",
+    "steamid": "^1.1.0",
+    "unzipper": "^0.10.0"
   }
 }

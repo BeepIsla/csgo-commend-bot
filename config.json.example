@@ -1,20 +1,21 @@
 {
-	"SteamAPIKey": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
-	"AccountToCommend": "https://steamcommunity.com/id/gabelogannewell/",
-	"CommendsToSend": 5,
-	"Commend": {
-		"Friendly": true,
-		"Teacher": true,
-		"Leader": true
+	"commend": {
+		"friendly": true,
+		"teaching": true,
+		"leader": true
 	},
-	"AccountCooldown": 43200000,
-	"RateLimitedCooldown": 5400000,
-	"Chunks": {
-		"CommendsPerChunk": 100,
-		"SwitchProxyEvery": 2,
-		"TimeBetweenChunks": 60000,
-		"TimeBetweenConnectionAndSending": 2000,
-		"BeautifyDelay": 10000
+	"account": {
+		"username": "",
+		"password": "",
+		"sharedSecret": ""
 	},
-	"Proxies": []
+	"method": "SERVER",
+	"target": "https://steamcommunity.com/id/gabelogannewell",
+	"serverID": "[A:1:1621585931:12649]",
+	"matchID": "0",
+	"toSend": 40,
+	"perChunk": 20,
+	"betweenChunks": 300000,
+	"cooldown": 28800000,
+	"steamWebAPIKey": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
 }
