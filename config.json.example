@@ -11,7 +11,7 @@
 	},
 	"method": "SERVER",
 	"target": "https://steamcommunity.com/id/gabelogannewell",
-	"serverID": "[A:1:1621585931:12649]",
+	"serverID": "auto",
 	"matchID": "0",
 	"toSend": 40,
 	"perChunk": 20,
