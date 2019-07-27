@@ -51,13 +51,13 @@ There also is a limit of the amount of commends you can send within a specific a
 - `Reset Database`: Will clear out **all** content of the database, resetting it to the default
 - `Exit`: Safely close database before exiting process
 
-Then simple run it via `node databaseManager.js`, use the arrow keys & enter to navigate. Read on-screen instructions for more details.
+Simple run it via `node databaseManager.js`, use the arrow keys & enter to navigate. Read on-screen instructions for more details.
 
 # Botting Method
 You can choose between two botting methods, `LOGIN` and `SERVER`.
 
 - `LOGIN` will log into the targets account and automatically grab a server. `account` object **must** be filled with account details. Will ignore `target` & `serverID`.
-- `SERVER` will assume the target is on the defined server. `serverID` **must** be either a ServerIP including port or a direct ServerID. Will ignore `account`.
+- `SERVER` will assume the target is on the defined server - [Read More](#server-id)
 
 # Server ID
 The `serverID` field allows for either ServerIP, ServerID or `auto`.
