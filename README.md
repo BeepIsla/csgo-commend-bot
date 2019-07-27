@@ -1,13 +1,10 @@
 # CSGO Commend Bot
-If you're a developer and want to know how to fix your own commend bot its very simple. Just set `steam_id_gs` to a valid server steam ID, on your target's account & bot accounts. Switch after 20 commends and repeat.
+If you're a developer and want to know how to fix your own commend bot its very simple. Just set `steam_id_gs` to a valid server steam ID, on your target's account & bot accounts.
 
 ---
 
-# Restrictions
-Valve changed it so that you now need to *be* on a server before you can commend someone. There also is a limit of the amount of commends you can send per server, that limit is set to 20. Due to this you need your targets Steam details, so you can login and change server after 20 commends. This also **heavily** impacts speed.
-
-# Known issues
-- Typically after 20 commends you cannot commend a person anymore for ~4-5 minutes. This is not always the case and I do not know what impacts this. I recommend leaving the `perChunk` and `betweenChunks` config values to their default.
+# Restrictions and Issues
+There also is a limit of the amount of commends you can send within a specific amount of time, that limit is set to 20. Due to this I recommend leaving `perChunk` and `betweenChunks` default but you can always experiment around.
 
 # Future
 - Add the ability to remove commends
