@@ -137,6 +137,28 @@ module.exports = class Account {
 	}
 
 	/**
+	 * Get the server our target is on
+	 * @param {Number} accountid Target account ID
+	 * @return {Promise.<Object>}
+	 */
+	getTargetServer(accountid) {
+		return this.csgoUser.sendMessage(
+			730,
+			this.csgoUser.Protos.csgo.ECsgoGCMsg.k_EMsgGCCStrike15_v2_ClientRequestJoinFriendData,
+			{},
+			this.csgoUser.Protos.csgo.CMsgGCCStrike15_v2_ClientRequestJoinFriendData,
+			{
+				account_id: accountid,
+				join_token: 837131816,
+				join_ipp: 3238322850
+			},
+			this.csgoUser.Protos.csgo.ECsgoGCMsg.k_EMsgGCCStrike15_v2_ClientRequestJoinFriendData,
+			this.csgoUser.Protos.csgo.CMsgGCCStrike15_v2_ClientRequestJoinFriendData,
+			10000
+		);
+	}
+
+	/**
 	 * Log out from the account
 	 */
 	logOff() {

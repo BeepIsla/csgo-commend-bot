@@ -5,6 +5,7 @@ const SteamUser = require("steam-user");
 const fs = require("fs");
 const Target = require("./helpers/Target.js");
 const Helper = require("./helpers/Helper.js");
+const Account = require("./helpers/account.js");
 const config = require("./config.json");
 
 process.on("unhandledRejection", console.error);
@@ -127,11 +128,29 @@ console.log = (color, ...args) => {
 
 	if (config.method.toUpperCase() === "LOGIN") {
 		console.log("white", "Getting an available server");
+
 		serverToUse = (await helper.GetActiveServer()).shift().steamid;
+		console.log("white", "Selected available server " + serverToUse);
+
 		targetAcc.setGamesPlayed(serverToUse);
 	} else if (config.method.toUpperCase() === "SERVER") {
 		console.log("white", "Parsing server input");
-		serverToUse = await helper.parseServerID(config.serverID);
+
+		if (config.serverID.toUpperCase() !== "AUTO") {
+			serverToUse = await helper.parseServerID(config.serverID);
+			console.log("white", "Parsed server input to " + serverToUse);
+		} else {
+			let fetcher = new Account();
+			await fetcher.login(accountsToUse[0].username, accountsToUse[0].password, accountsToUse[0].sharedSecret);
+
+			serverToUse = (await fetcher.getTargetServer(targetAcc)).res.serverid.toString();
+			console.log("white", "Found target on server " + serverToUse);
+
+			fetcher.logOff();
+
+			// Wait a little bit before continuing to ensure we are disconnected
+			await new Promise(p => setTimeout(p, 2000));
+		}
 	}
 
 	for (let i = 0; i < chunks.length; i++) {
