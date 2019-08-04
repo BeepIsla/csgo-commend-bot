@@ -39,7 +39,7 @@ process.on("message", async (msg) => {
 					hello: hello
 				});
 
-				await a.commendPlayer(serverSteamID, toCommend, config.matchid ? config.matchid : "0", config.commend.friendly, config.commend.teaching, config.commend.leader).then((response) => {
+				await a.commendPlayer(serverSteamID, toCommend, config.matchid ? config.matchid : "0", acc.commend.friendly, acc.commend.teaching, acc.commend.leader).then((response) => {
 					process.send({
 						type: "commended",
 						username: a.username,

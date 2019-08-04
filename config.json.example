@@ -1,8 +1,8 @@
 {
 	"commend": {
-		"friendly": true,
-		"teaching": true,
-		"leader": true
+		"friendly": 5,
+		"teaching": 10,
+		"leader": 15
 	},
 	"account": {
 		"username": "",
@@ -13,7 +13,6 @@
 	"target": "https://steamcommunity.com/id/gabelogannewell",
 	"serverID": "auto",
 	"matchID": "0",
-	"toSend": 40,
 	"perChunk": 20,
 	"betweenChunks": 300000,
 	"cooldown": 28800000,
