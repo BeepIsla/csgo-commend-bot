@@ -23,6 +23,7 @@ const colors = {
 	white: "\x1b[37m"
 };
 const helper = new Helper(config.steamWebAPIKey);
+let totalNeeded = Math.max(config.commend.friendly, config.commend.teaching, config.commend.leader);
 let db = undefined;
 let isNewVersion = false;
 let totalSuccess = 0;
@@ -35,7 +36,7 @@ console.log = (color, ...args) => {
 }
 
 (async () => {
-	if ([ "LOGIN", "SERVER" ].includes(config.method.toUpperCase()) === false) {
+	if (!["LOGIN", "SERVER"].includes(config.method.toUpperCase())) {
 		console.log("red", "The \"method\" option only allows for \"LOGIN\" or \"SERVER\" value. Please refer to the README for more information.");
 		return;
 	}
@@ -49,7 +50,7 @@ console.log = (color, ...args) => {
 				let version = fs.readFileSync("./data/version").toString();
 				isNewVersion = version !== package.version;
 			}
-	
+
 			if (!fs.existsSync("./data")) {
 				fs.mkdirSync("./data");
 			}
@@ -91,8 +92,8 @@ console.log = (color, ...args) => {
 
 	let amount = await db.get("SELECT COUNT(*) FROM accounts WHERE operational = 1;");
 	console.log("white", "There are a total of " + amount["COUNT(*)"] + " operational accounts");
-	if (amount["COUNT(*)"] < config.toSend) {
-		console.log("red", "Not enough accounts available, got " + amount["COUNT(*)"] + "/" + config.toSend);
+	if (amount["COUNT(*)"] < totalNeeded) {
+		console.log("red", "Not enough accounts available, got " + amount["COUNT(*)"] + "/" + totalNeeded);
 		return;
 	}
 
@@ -111,9 +112,9 @@ console.log = (color, ...args) => {
 		targetAcc = (await helper.parseSteamID(config.target)).accountid;
 	}
 
-	let accountsToUse = await db.all("SELECT accounts.username, accounts.password, accounts.sharedSecret FROM accounts LEFT JOIN commended ON commended.username = accounts.username WHERE accounts.username NOT IN (SELECT username FROM commended WHERE commended = " + (typeof targetAcc === "object" ? targetAcc.accountid : targetAcc) + " OR commended.username IS NULL) AND (" + Date.now() + " - accounts.lastCommend) >= " + config.cooldown + " AND accounts.operational = 1 GROUP BY accounts.username LIMIT " + config.toSend);
-	if (accountsToUse.length < config.toSend) {
-		console.log("red", "Not enough accounts available, got " + accountsToUse.length + "/" + config.toSend);
+	let accountsToUse = await db.all("SELECT accounts.username, accounts.password, accounts.sharedSecret FROM accounts LEFT JOIN commended ON commended.username = accounts.username WHERE accounts.username NOT IN (SELECT username FROM commended WHERE commended = " + (typeof targetAcc === "object" ? targetAcc.accountid : targetAcc) + " OR commended.username IS NULL) AND (" + Date.now() + " - accounts.lastCommend) >= " + config.cooldown + " AND accounts.operational = 1 GROUP BY accounts.username LIMIT " + totalNeeded);
+	if (accountsToUse.length < totalNeeded) {
+		console.log("red", "Not enough accounts available, got " + accountsToUse.length + "/" + totalNeeded);
 
 		if (targetAcc instanceof Target) {
 			targetAcc.logOff();
@@ -121,6 +122,17 @@ console.log = (color, ...args) => {
 
 		await db.close();
 		return;
+	}
+
+	// Inject what to commend with in our accounts
+	for (let i = 0; i < accountsToUse.length; i++) {
+		let chosen = accountsToUse.filter(a => typeof a.commend === "object").length;
+
+		accountsToUse[i].commend = {
+			friendly: config.commend.friendly > chosen ? true : false,
+			teaching: config.commend.teaching > chosen ? true : false,
+			leader: config.commend.leader > chosen ? true : false
+		}
 	}
 
 	console.log("white", "Chunking " + accountsToUse.length + " account" + (accountsToUse.length === 1 ? "" : "s") + " into groups of " + config.perChunk + "...");
@@ -214,7 +226,7 @@ function handleChunk(chunk, toCommend, serverSteamID) {
 					toCommend: toCommend,
 					serverSteamID: serverSteamID
 				});
-				return; 
+				return;
 			}
 
 			if (msg.type === "error") {
