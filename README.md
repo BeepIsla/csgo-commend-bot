@@ -24,9 +24,9 @@ There also is a limit of the amount of commends you can send within a specific a
 
 # Config
 - commend:
-  - friendly `Boolean`: Whether or not to commend as friendly
-  - teaching `Boolean`: Whether or not to commend as teaching
-  - leader `Boolean`: Whether or not to commend as leader
+  - friendly `Number`: Amount of commends you want to send as friendly
+  - teaching `Number`: Amount of commends you want to send as teaching
+  - leader `Number`: Amount of commends you want to send as leader
 - account:
   - username `String`: Username of the account you want to boost
   - password `String`: Pasword of the account you want to boost
@@ -35,7 +35,6 @@ There also is a limit of the amount of commends you can send within a specific a
 - target `String`: SteamID/VanityURL/ProfileURL of target
 - serverID `String`: ServerID, **or** IP, **or** `auto` of the server - [Read More](#server-id)
 - matchID `String`: Optional match ID, typically just `"0"` anyways - I always use `"0"`.
-- toSend `Number`: Total amount of commends you want to send
 - perChunk `Number`: `toSend` will be split into parts of `perChunk` size
 - betweenChunks `Number`: Cooldown in milliseconds to wait after each part/chunk
 - cooldown `Number`: Cooldown in milliseconds to not reuse accounts - Currently set to 8 hours
