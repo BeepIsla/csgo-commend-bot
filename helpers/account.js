@@ -112,8 +112,11 @@ module.exports = class Account {
 	 * @returns {Promise.<Object>}
 	 */
 	commendPlayer(serverID, accountID, matchID, cmd_friendly, cmd_teaching, cmd_leader) {
-		return new Promise((resolve, reject) => {
+		return new Promise(async (resolve, reject) => {
 			this.setGamesPlayed(serverID);
+
+			// Wait for the ServerID to set
+			await new Promise(p => setTimeout(p, 50));
 
 			this.csgoUser.sendMessage(
 				730,
