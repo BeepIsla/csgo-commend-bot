@@ -140,7 +140,16 @@ console.log = (color, ...args) => {
 			serverToUse = await helper.parseServerID(config.serverID);
 			console.log("white", "Parsed server input to " + serverToUse);
 		} else {
-			let fetcher = new Account();
+			console.log("red", "WARNING: \"auto\" is not yet working. I am working on a fix. Please refer to the README for more information.");
+
+			if (targetAcc instanceof Target) {
+				targetAcc.logOff();
+			}
+
+			await db.close();
+			return;
+
+			/*let fetcher = new Account();
 			await fetcher.login(accountsToUse[0].username, accountsToUse[0].password, accountsToUse[0].sharedSecret);
 
 			serverToUse = (await fetcher.getTargetServer(targetAcc)).res.serverid.toString();
@@ -149,7 +158,7 @@ console.log = (color, ...args) => {
 			fetcher.logOff();
 
 			// Wait a little bit before continuing to ensure we are disconnected
-			await new Promise(p => setTimeout(p, 2000));
+			await new Promise(p => setTimeout(p, 2000));*/
 		}
 	}
 
