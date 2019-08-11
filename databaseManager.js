@@ -63,7 +63,7 @@ const helper = new Helper(config.steamWebAPIKey);
 				if (data.length <= 0) {
 					console.log("All accounts are working!");
 				} else {
-					console.log("Got " + data.length + " account" + (data.length === 1 ? "" : "s") + "\n" + data.join(", "));
+					console.log("Got " + data.length + " account" + (data.length === 1 ? "" : "s") + "\n" + data.map(d => d.username).join(", "));
 				}
 				break;
 			}
