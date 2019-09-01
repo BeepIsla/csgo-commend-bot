@@ -149,7 +149,18 @@ console.log = (color, ...args) => {
 		console.log("white", "Parsing server input");
 
 		if (config.serverID.toUpperCase() !== "AUTO") {
-			serverToUse = await helper.parseServerID(config.serverID);
+			serverToUse = await helper.parseServerID(config.serverID).catch(console.error);
+			if (!serverToUse) {
+				console.log("red", "Could not find online server for " + config.serverID);
+
+				if (targetAcc instanceof Target) {
+					targetAcc.logOff();
+				}
+
+				await db.close();
+				return;
+			}
+
 			console.log("white", "Parsed server input to " + serverToUse);
 		} else {
 			console.log("red", "WARNING: \"auto\" is not yet working. I am working on a fix. Please refer to the README for more information.");
