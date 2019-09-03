@@ -163,25 +163,43 @@ console.log = (color, ...args) => {
 
 			console.log("white", "Parsed server input to " + serverToUse);
 		} else {
-			console.log("red", "WARNING: \"auto\" is not yet working. I am working on a fix. Please refer to the README for more information.");
+			console.log("blue", "Logging into fetcher account...");
+			let fetcher = new Account();
+			await fetcher.login(config.fetcher.username, config.fetcher.password, config.fetcher.sharedSecret);
 
-			if (targetAcc instanceof Target) {
-				targetAcc.logOff();
+			console.log("blue", "Trying to fetch target " + config.fetcher.maxTries + " time" (config.fetcher.maxTries === 1 ? "" : "s") + " with a delay of " + config.fetcher.tryDelay + "ms");
+
+			let tries = 0;
+			while (!serverToUse) {
+				tries++;
+
+				if (tries > config.fetcher.maxTries) {
+					console.log("red", "Failed to find server after " + tries + " tr" + (tries === 1 ? "y" : "ies"));
+					break;
+				}
+
+				serverToUse = await fetcher.getTargetServer(targetAcc).catch((err) => {
+					if (err.message) {
+						console.log("red", err.message);
+					} else {
+						console.error(err);
+					}
+				});
+
+				if (!serverToUse) {
+					await new Promise(p => setTimeout(p, config.fetcher.tryDelay));
+				}
 			}
-
-			await db.close();
-			return;
-
-			/*let fetcher = new Account();
-			await fetcher.login(accountsToUse[0].username, accountsToUse[0].password, accountsToUse[0].sharedSecret);
-
-			serverToUse = (await fetcher.getTargetServer(targetAcc)).res.serverid.toString();
-			console.log("white", "Found target on server " + serverToUse);
 
 			fetcher.logOff();
 
-			// Wait a little bit before continuing to ensure we are disconnected
-			await new Promise(p => setTimeout(p, 2000));*/
+			if (!serverToUse) {
+				await db.close();
+				return;
+			}
+
+			console.log("green", "Found target on " + (serverToUse.isValve ? "Valve" : "Community") + " server " + serverToUse.serverID + " after " + tries + " tr" + (tries === 1 ? "y" : "ies") + " " + (serverToUse.isValve ? "" : ("(" + serverToUse.serverIP + ")")));
+			serverToUse = serverToUse.serverID;
 		}
 	}
 
