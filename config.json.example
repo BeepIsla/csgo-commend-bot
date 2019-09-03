@@ -9,6 +9,13 @@
 		"password": "",
 		"sharedSecret": ""
 	},
+	"fetcher": {
+		"username": "PrimeAccount",
+		"password": "PrimePassword",
+		"sharedSecret": "",
+		"maxTries": 10,
+		"tryDelay": 2500
+	},
 	"method": "SERVER",
 	"target": "https://steamcommunity.com/id/gabelogannewell",
 	"serverID": "auto",

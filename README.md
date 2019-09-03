@@ -31,6 +31,12 @@ There also is a limit of the amount of commends you can send within a specific a
   - username `String`: Username of the account you want to boost
   - password `String`: Pasword of the account you want to boost
   - sharedSecret `String`: Optional shared secret if the account has two factor authentication
+- fetcher:
+  - username `String`: Username of the account you want to use for automatically fetching server - Only required when using `auto` for `serverID` field - **Non-Prime accounts might encounter errors**
+  - password `String`: Password of the account you want to use for automatically fetching server
+  - sharedSecret `String`: Optional shared secret of the account you want to use for automatically fetching server
+  - maxTries `Number`: Maximum amount of tries before cancelling fetching
+  - tryDelay `Number`: Amount of milliseconds to wait between each try
 - method `String`: Define the method - Valid values: `LOGIN` & `SERVER` - [Read More](#botting-method)
 - target `String`: SteamID/VanityURL/ProfileURL of target
 - serverID `String`: ServerID, **or** IP, **or** `auto` of the server - [Read More](#server-id)
@@ -66,4 +72,6 @@ The `serverID` field allows for either ServerIP, ServerID or `auto`.
 - - On a community server it will look like this: `1.37.0.1/13701 934/7508 secure  [A:1:1297634312:12708]` > `[A:1:1297634312:12708]`.
 - - On a Valve server it will look like this: `Connected to =[A:1:3849827331:12657]:0` > `[A:1:3849827331:12657]`.
 - - *Make sure to **only** include the stuff between the brackets and the brackets themselves.*
-- `auto` will automatically try and find the correct server the target is on. This works for **all** official Valve servers and on community servers **if** the target has `cl_join_advertise` set to `2`.
+- `auto` will automatically try and find the correct server the target is on. This works for Casual, Deathmatch or War Games on official Valve servers (Requires `cl_join_advertise` to be `1` or higher) and on any community servers (Requires `cl_join_advertise` to be `2` or higher)
+  - **Using `auto` requires you to use a `fetcher` account in your config**
+  - Certain privacy settings may interfer with this, before reporting an issue make sure everything is set to public in your [Steam Privacy Settings](https://steamcommunity.com/my/edit/settings)

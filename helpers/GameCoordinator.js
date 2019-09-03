@@ -15,6 +15,13 @@ module.exports = class GameCoordinator extends Events {
 					__dirname + "/../protobufs/csgo/gcsdk_gcmessages.proto",
 					__dirname + "/../protobufs/csgo/cstrike15_gcmessages.proto"
 				]
+			},
+			{
+				name: "steam",
+				protos: [
+					__dirname + "/../protobufs/steam/steammessages_base.proto",
+					__dirname + "/../protobufs/steam/steammessages_clientserver_2.proto"
+				]
 			}
 		]);
 		this._GCHelloInterval = null;
@@ -119,16 +126,16 @@ module.exports = class GameCoordinator extends Events {
 
 					if (!responseProtobuf) {
 						if (body instanceof Buffer || body instanceof ByteBuffer) {
-							resolve(body);
+							resolve(body.toBuffer ? body.toBuffer() : body);
 							return;
 						}
 
-						resolve(body);
+						resolve(body.toBuffer ? body.toBuffer() : body);
 						return;
 					}
 
 					if (body instanceof Buffer || body instanceof ByteBuffer) {
-						body = responseProtobuf.decode(body)
+						body = responseProtobuf.decode(body.toBuffer ? body.toBuffer() : body);
 						body = responseProtobuf.toObject(body, { defaults: true });
 					}
 

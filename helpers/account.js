@@ -1,6 +1,8 @@
 const SteamUser = require("steam-user");
 const SteamTotp = require("steam-totp");
+const SteamID = require("steamid");
 const GameCoordinator = require("./GameCoordinator.js");
+const VDF = require("./VDF.js");
 
 module.exports = class Account {
 	constructor(isTarget = false) {
@@ -145,20 +147,92 @@ module.exports = class Account {
 	 * @return {Promise.<Object>}
 	 */
 	getTargetServer(accountid) {
-		return this.csgoUser.sendMessage(
-			730,
-			this.csgoUser.Protos.csgo.ECsgoGCMsg.k_EMsgGCCStrike15_v2_ClientRequestJoinFriendData,
-			{},
-			this.csgoUser.Protos.csgo.CMsgGCCStrike15_v2_ClientRequestJoinFriendData,
-			{
-				account_id: accountid,
-				join_token: 837131816,
-				join_ipp: 3238322850
-			},
-			this.csgoUser.Protos.csgo.ECsgoGCMsg.k_EMsgGCCStrike15_v2_ClientRequestJoinFriendData,
-			this.csgoUser.Protos.csgo.CMsgGCCStrike15_v2_ClientRequestJoinFriendData,
-			10000
-		);
+		return new Promise((resolve, reject) => {
+			this.csgoUser.sendMessage(
+				undefined,
+				7502,
+				{
+					routing_appid: 730
+				},
+				this.csgoUser.Protos.steam.CMsgClientRichPresenceRequest,
+				{
+					steamid_request: [
+						SteamID.fromIndividualAccountID(accountid).getSteamID64()
+					]
+				},
+				7503,
+				this.csgoUser.Protos.steam.CMsgClientRichPresenceInfo,
+				5000
+			).then((info) => {
+				if (info.rich_presence.length <= 0) {
+					reject(new Error("Got no Steam rich presence data"));
+					return;
+				}
+
+				if (!info.rich_presence[0].rich_presence_kv) {
+					reject(new Error("Got no Steam rich presence data"));
+					return;
+				}
+
+				let decoded = undefined;
+				try {
+					decoded = VDF.decode(info.rich_presence[0].rich_presence_kv);
+				} catch { }
+
+				if (!decoded || !decoded.RP) {
+					reject(new Error("Failed to decode Steam rich presence keyvalues"));
+					return;
+				}
+
+				if (!decoded.RP.connect) {
+					reject(new Error("Target is likely not in a server or in a full server // Failed to find connect bytes"));
+					return;
+				}
+
+				// Parse tokens
+				let conBuf = Buffer.from(decoded.RP.connect.replace(/^\+gcconnect/, "").replace(/^G/, ""), "hex");
+				if (conBuf.length !== 12) {
+					reject(new Error("Target is likely in a lobby and not on a server // Requiring connect string of 12 bytes but received " + conBuf.length));
+					return;
+				}
+
+				let joinToken = conBuf.readInt32BE(0);
+				let accountID = conBuf.readInt32BE(4);
+				let joinIpp = conBuf.readInt32BE(8);
+
+				this.csgoUser.sendMessage(
+					730,
+					this.csgoUser.Protos.csgo.ECsgoGCMsg.k_EMsgGCCStrike15_v2_ClientRequestJoinFriendData,
+					{},
+					this.csgoUser.Protos.csgo.CMsgGCCStrike15_v2_ClientRequestJoinFriendData,
+					{
+						version: 0,
+						account_id: accountID,
+						join_token: joinToken,
+						join_ipp: joinIpp
+					},
+					this.csgoUser.Protos.csgo.ECsgoGCMsg.k_EMsgGCCStrike15_v2_ClientRequestJoinFriendData,
+					this.csgoUser.Protos.csgo.CMsgGCCStrike15_v2_ClientRequestJoinFriendData,
+					5000
+				).then((data) => {
+					if (data.errormsg) {
+						reject(new Error("Received join error: " + data.errormsg));
+						return;
+					}
+
+					if (!data.res || !data.res.serverid) {
+						reject(new Error("Failed to get server join data"));
+						return;
+					}
+
+					resolve({
+						serverID: data.res.serverid,
+						isValve: data.res.reservation && data.res.reservation.game_type,
+						serverIP: data.res.server_address
+					});
+				}).catch(reject);
+			}).catch(reject);
+		});
 	}
 
 	/**
