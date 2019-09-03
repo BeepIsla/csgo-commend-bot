@@ -167,7 +167,7 @@ console.log = (color, ...args) => {
 			let fetcher = new Account();
 			await fetcher.login(config.fetcher.username, config.fetcher.password, config.fetcher.sharedSecret);
 
-			console.log("blue", "Trying to fetch target " + config.fetcher.maxTries + " time" (config.fetcher.maxTries === 1 ? "" : "s") + " with a delay of " + config.fetcher.tryDelay + "ms");
+			console.log("blue", "Trying to fetch target " + config.fetcher.maxTries + " time" + (config.fetcher.maxTries === 1 ? "" : "s") + " with a delay of " + config.fetcher.tryDelay + "ms");
 
 			let tries = 0;
 			while (!serverToUse) {
