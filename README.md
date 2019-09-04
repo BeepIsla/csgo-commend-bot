@@ -37,6 +37,7 @@ There also is a limit of the amount of commends you can send within a specific a
   - sharedSecret `String`: Optional shared secret of the account you want to use for automatically fetching server
   - maxTries `Number`: Maximum amount of tries before cancelling fetching
   - tryDelay `Number`: Amount of milliseconds to wait between each try
+  - askSteamGuard `Boolean`: Set to `true` if you want the script to ask for Steam Guard code, false to just error and cancel
 - method `String`: Define the method - Valid values: `LOGIN` & `SERVER` - [Read More](#botting-method)
 - target `String`: SteamID/VanityURL/ProfileURL of target
 - serverID `String`: ServerID, **or** IP, **or** `auto` of the server - [Read More](#server-id)
