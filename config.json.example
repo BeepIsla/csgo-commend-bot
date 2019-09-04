@@ -14,7 +14,8 @@
 		"password": "PrimePassword",
 		"sharedSecret": "",
 		"maxTries": 10,
-		"tryDelay": 2500
+		"tryDelay": 2500,
+		"askSteamGuard": true
 	},
 	"method": "SERVER",
 	"target": "https://steamcommunity.com/id/gabelogannewell",

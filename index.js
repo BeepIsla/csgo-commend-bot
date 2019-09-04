@@ -164,7 +164,7 @@ console.log = (color, ...args) => {
 			console.log("white", "Parsed server input to " + serverToUse);
 		} else {
 			console.log("blue", "Logging into fetcher account...");
-			let fetcher = new Account();
+			let fetcher = new Account(config.fetcher.askSteamGuard);
 			await fetcher.login(config.fetcher.username, config.fetcher.password, config.fetcher.sharedSecret);
 
 			console.log("blue", "Trying to fetch target " + config.fetcher.maxTries + " time" + (config.fetcher.maxTries === 1 ? "" : "s") + " with a delay of " + config.fetcher.tryDelay + "ms");
