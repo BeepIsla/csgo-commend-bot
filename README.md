@@ -22,6 +22,9 @@ There also is a limit of the amount of commends you can send within a specific a
 5. Add accounts using the [Database Manager](#database-manager)
 6. Run `node index.js`
 
+# Updating
+Following the installation steps from `1` to `4` and simply override all files. **NEVER DELETE YOUR `accounts.sqlite` IT STORES ALL IMPORTANT INFORMATION - NOT ONLY ACCOUNT DETAILS**
+
 # Config
 - commend:
   - friendly `Number`: Amount of commends you want to send as friendly

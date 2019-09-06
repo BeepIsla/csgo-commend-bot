@@ -276,18 +276,30 @@ function handleChunk(chunk, toCommend, serverSteamID) {
 			if (msg.type === "commended") {
 				await db.run("UPDATE accounts SET lastCommend = " + Date.now() + " WHERE username = \"" + msg.username + "\"").catch(() => { });
 
-				if (msg.response.response_result !== 1) {
+				if (msg.response.response_result === 2) {
+					// Already commended
 					res.error.push(msg.response);
 
-					console.log("red", "[" + msg.username + "] Commended but got invalid success code " + msg.response.response_result + " (" + (res.error.length + res.success.length) + "/" + chunk.length + ")");
+					console.log("red", "[" + msg.username + "] Got response code " + msg.response.response_result + ", already commended target (" + (res.error.length + res.success.length) + "/" + chunk.length + ")");
+
+					await db.run("INSERT INTO commended (username, commended, timestamp) VALUES (\"" + msg.username + "\", " + toCommend + ", " + Date.now() + ")").catch(() => { });
 					return;
 				}
 
-				res.success.push(msg.response);
+				if (msg.response.response_result === 1) {
+					// Success commend
+					res.success.push(msg.response);
 
-				console.log("green", "[" + msg.username + "] Successfully sent a commend with response code " + msg.response.response_result + " - Remaining Commends: " + msg.response.tokens + " (" + (res.error.length + res.success.length) + "/" + chunk.length + ")");
+					console.log("green", "[" + msg.username + "] Successfully sent a commend with response code " + msg.response.response_result + " - Remaining Commends: " + msg.response.tokens + " (" + (res.error.length + res.success.length) + "/" + chunk.length + ")");
 
-				await db.run("INSERT INTO commended (username, commended, timestamp) VALUES (\"" + msg.username + "\", " + toCommend + ", " + Date.now() + ")").catch(() => { });
+					await db.run("INSERT INTO commended (username, commended, timestamp) VALUES (\"" + msg.username + "\", " + toCommend + ", " + Date.now() + ")").catch(() => { });
+					return;	
+				}
+
+				// Unknown response code
+				res.error.push(msg.response);
+
+				console.log("red", "[" + msg.username + "] Commended but got invalid success code " + msg.response.response_result + " (" + (res.error.length + res.success.length) + "/" + chunk.length + ")");
 				return;
 			}
 
