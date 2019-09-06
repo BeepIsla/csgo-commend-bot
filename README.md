@@ -1,6 +1,8 @@
 # CSGO Commend Bot
 If you're a developer and want to know how to fix your own commend bot its very simple. Just set `steam_id_gs` to a valid server steam ID, on your target's account & bot accounts.
 
+Please view the [Changelog](./CHANGELOG.md) for a simple list of changes
+
 ---
 
 # Restrictions and Issues
