@@ -124,8 +124,8 @@ const helper = new Helper(config.steamWebAPIKey);
 						let password = parts.join(":");
 
 						return {
-							username: username,
-							password: password,
+							username: username.trim(),
+							password: password.trim(),
 							sharedSecret: ""
 						}
 					});
