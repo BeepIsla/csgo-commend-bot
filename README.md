@@ -71,7 +71,7 @@ You can choose between two botting methods, `LOGIN` and `SERVER`.
 - `SERVER` will assume the target is on the defined server - [Read More](#server-id)
 
 # Server ID
-The `serverID` field allows for either ServerIP, ServerID or `auto`.
+The `serverID` field allows for either ServerIP, ServerID or `auto`. Make sure that the server has enough space for your bots. Full servers will not work.
 
 - Server IP is self explanatory.
 - ServerID can be found by entering `status` into the console ingame.
