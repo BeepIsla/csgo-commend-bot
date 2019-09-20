@@ -351,8 +351,11 @@ function handleChunk(chunk, toCommend, serverSteamID) {
 
 				if (typeof msg.error.eresult === "number" && !ignoreCodes.includes(msg.error.eresult)) {
 					console.log("red", "[" + msg.username + "] Failed to login (" + (res.error.length + res.success.length) + "/" + chunk.length + ")", msg.error);
-				} if (msg.error && msg.error.message === "Steam Guard required") {
+				} else if (msg.error && msg.error.message === "Steam Guard required") {
 					console.log("red", "[" + msg.username + "] Requires a Steam Guard code and has been marked as invalid (" + (res.error.length + res.success.length) + "/" + chunk.length + ")", msg.error);
+					await db.run("UPDATE accounts SET operational = 0 WHERE \"username\" = \"" + msg.username + "\"");
+				} else if (msg.error && msg.error.message === "VAC Banned") {
+					console.log("red", "[" + msg.username + "] Has been VAC banned in CSGO and has been marked as invalid (" + (res.error.length + res.success.length) + "/" + chunk.length + ")", msg.error);
 					await db.run("UPDATE accounts SET operational = 0 WHERE \"username\" = \"" + msg.username + "\"");
 				} else {
 					console.log("red", "[" + msg.username + "] Failed to login and has been marked as invalid (" + (res.error.length + res.success.length) + "/" + chunk.length + ")", msg.error);

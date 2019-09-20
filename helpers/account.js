@@ -48,6 +48,7 @@ module.exports = class Account {
 				clearTimeout(this.loginTimeout);
 				this.loginTimeout = null;
 
+				this.steamUser.logOff();
 				this.steamUser.removeListener("error", error);
 				this.steamUser.removeListener("loggedOn", loggedOn);
 				this.steamUser.removeListener("steamGuard", steamGuard);
@@ -59,14 +60,24 @@ module.exports = class Account {
 				clearTimeout(this.loginTimeout);
 				this.loginTimeout = null;
 
+				this.steamUser.removeListener("error", error);
+				this.steamUser.removeListener("loggedOn", loggedOn);
+				this.steamUser.removeListener("steamGuard", steamGuard);
+
+				while (!this.steamUser.vac) {
+					await new Promise(p => setTimeout(p, 1));
+				}
+
+				if (this.steamUser.vac.appids.includes(730)) {
+					this.steamUser.logOff();
+					reject(new Error("VAC Banned"));
+					return;
+				}
+
 				await this.steamUser.requestFreeLicense(730);
 
 				this.steamUser.setPersona(SteamUser.EPersonaState.Online);
 				this.steamUser.gamesPlayed(730);
-
-				this.steamUser.removeListener("error", error);
-				this.steamUser.removeListener("loggedOn", loggedOn);
-				this.steamUser.removeListener("steamGuard", steamGuard);
 
 				this.csgoUser.start().then(resolve).catch(reject);
 			};
@@ -75,6 +86,7 @@ module.exports = class Account {
 				clearTimeout(this.loginTimeout);
 				this.loginTimeout = null;
 
+				this.steamUser.logOff();
 				this.steamUser.removeListener("error", error);
 				this.steamUser.removeListener("loggedOn", loggedOn);
 				this.steamUser.removeListener("steamGuard", steamGuard);
