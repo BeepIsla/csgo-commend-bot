@@ -154,19 +154,40 @@ module.exports = class Helper {
 	GetActiveServer() {
 		return doRequest.call(this, "IGameServersService/GetServerList", "v1", {
 			limit: 1,
-			filter: "\\appid\\730"
+			filter: "\\appid\\730\\noplayers\\1\\"
 		}, [
-				"response",
-				"servers"
-			], Array.isArray);
+			"response",
+			"servers"
+		], Array.isArray);
 	}
 
 	vanityURL(url) {
 		return doRequest.call(this, "ISteamUser/ResolveVanityURL", "v1", {
 			vanityurl: url
 		}, [
-				"response"
-			], null);
+			"response"
+		], null);
+	}
+
+	getServerInfo(id) {
+		return new Promise((resolve, reject) => {
+			doRequest.call(this, "IGameServersService/GetServerList", "v1", {
+				limit: 1,
+				filter: "\\steamid\\" + id
+			}, [
+				"response",
+				"servers"
+			], Array.isArray).then((res) => {
+				if (!res[0]) {
+					reject(new Error("Invalid Server"));
+					return;
+				}
+
+				resolve(res[0]);
+			}).catch((err) => {
+				reject(err);
+			});
+		});
 	}
 
 	parseServerID(id) {
@@ -185,18 +206,18 @@ module.exports = class Helper {
 				limit: 1,
 				filter: "\\gameaddr\\" + id
 			}, [
-					"response",
-					"servers"
-				], Array.isArray).then((res) => {
-					if (!res[0].steamid) {
-						reject(new Error("Invalid Server IP"));
-						return;
-					}
+				"response",
+				"servers"
+			], Array.isArray).then((res) => {
+				if (!res[0].steamid) {
+					reject(new Error("Invalid Server IP"));
+					return;
+				}
 
-					resolve(res[0].steamid);
-				}).catch((err) => {
-					reject(err);
-				});
+				resolve(res[0].steamid);
+			}).catch((err) => {
+				reject(err);
+			});
 		});
 	}
 

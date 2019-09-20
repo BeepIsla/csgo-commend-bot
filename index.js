@@ -203,6 +203,29 @@ console.log = (color, ...args) => {
 		}
 	}
 
+	let info = await helper.getServerInfo(serverToUse).catch((err) => {
+		console.log("red", err.message === "Invalid Server" ? "Server is no longer available" : err.message);
+	});
+	if (!info) {
+		if (targetAcc instanceof Target) {
+			targetAcc.logOff();
+		}
+
+		await db.close();
+		return;
+	}
+
+	if (info.players >= info.max_players) {
+		console.log("red", "Server is full and cannot be used");
+
+		if (targetAcc instanceof Target) {
+			targetAcc.logOff();
+		}
+
+		await db.close();
+		return;
+	}
+
 	for (let i = 0; i < chunks.length; i++) {
 		console.log("white", "Logging in on chunk " + (i + 1) + "/" + chunks.length);
 
