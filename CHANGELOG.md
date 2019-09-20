@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.2.4
+- Do not allow full servers to be used (#76)
+- Error on VAC banned accounts (#100)
+
 ## 2.2.3
 - Handle response code 2 (Already commended)
 
