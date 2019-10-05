@@ -93,7 +93,7 @@ console.log = (color, ...args) => {
 	let amount = await db.get("SELECT COUNT(*) FROM accounts WHERE operational = 1;");
 	console.log("white", "There are a total of " + amount["COUNT(*)"] + " operational accounts");
 	if (amount["COUNT(*)"] < totalNeeded) {
-		console.log("red", "Not enough accounts available, got " + amount["COUNT(*)"] + "/" + totalNeeded);
+		console.log("red", "Not enough operational accounts available, got " + amount["COUNT(*)"] + "/" + totalNeeded);
 		return;
 	}
 
@@ -114,7 +114,7 @@ console.log = (color, ...args) => {
 
 	let accountsToUse = await db.all("SELECT accounts.username, accounts.password, accounts.sharedSecret FROM accounts LEFT JOIN commended ON commended.username = accounts.username WHERE accounts.username NOT IN (SELECT username FROM commended WHERE commended = " + (typeof targetAcc === "object" ? targetAcc.accountid : targetAcc) + " OR commended.username IS NULL) AND (" + Date.now() + " - accounts.lastCommend) >= " + config.cooldown + " AND accounts.operational = 1 GROUP BY accounts.username LIMIT " + totalNeeded);
 	if (accountsToUse.length < totalNeeded) {
-		console.log("red", "Not enough accounts available, got " + accountsToUse.length + "/" + totalNeeded);
+		console.log("red", "Not enough accounts available to commend user, got " + accountsToUse.length + "/" + totalNeeded + ". Either create new accounts or reset commend history for user.");
 
 		if (targetAcc instanceof Target) {
 			targetAcc.logOff();
@@ -316,7 +316,7 @@ function handleChunk(chunk, toCommend, serverSteamID) {
 					console.log("green", "[" + msg.username + "] Successfully sent a commend with response code " + msg.response.response_result + " - Remaining Commends: " + msg.response.tokens + " (" + (res.error.length + res.success.length) + "/" + chunk.length + ")");
 
 					await db.run("INSERT INTO commended (username, commended, timestamp) VALUES (\"" + msg.username + "\", " + toCommend + ", " + Date.now() + ")").catch(() => { });
-					return;	
+					return;
 				}
 
 				// Unknown response code
