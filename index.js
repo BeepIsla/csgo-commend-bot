@@ -204,7 +204,7 @@ console.log = (color, ...args) => {
 	}
 
 	let info = await helper.getServerInfo(serverToUse).catch((err) => {
-		console.log("red", err.message === "Invalid Server" ? "Server is no longer available" : err.message);
+		console.log("red", err.message === "Invalid Server" ? "Server is no longer available" : err);
 	});
 	if (!info) {
 		if (targetAcc instanceof Target) {
