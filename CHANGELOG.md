@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.2.5
+- Fixed error logging
+
 ## 2.2.4
 - Do not allow full servers to be used ([#76](https://github.com/BeepFelix/csgo-commend-bot/issues/76))
 - Error on VAC banned accounts ([#100](https://github.com/BeepFelix/csgo-commend-bot/issues/100))
