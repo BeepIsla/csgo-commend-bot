@@ -13,7 +13,7 @@ There also is a limit of the amount of commends you can send within a specific a
 - Add the ability to commend three times with one account per 24 hours instead of once every 8 hours
 
 # Requirements
-- [NodeJS **v11 or later**](https://nodejs.org/)
+- [NodeJS **v12**](https://nodejs.org/dist/v12.9.1/) - You will likely need `node-v12.9.1-x64.msi`
 - [Little bit of JSON knowledge](https://www.json.org/)
 
 # Installation
