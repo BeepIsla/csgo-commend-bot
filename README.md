@@ -62,7 +62,7 @@ Following the installation steps from `1` to `4` and simply override all files. 
 - `Reset Database`: Will clear out **all** content of the database, resetting it to the default
 - `Exit`: Safely close database before exiting process
 
-Simple run it via `node databaseManager.js`, use the arrow keys & enter to navigate. Read on-screen instructions for more details.
+Simply run it via `node databaseManager.js`, use the arrow keys & enter to navigate. Read on-screen instructions for more details.
 
 # Botting Method
 You can choose between two botting methods, `LOGIN` and `SERVER`.
