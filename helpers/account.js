@@ -56,6 +56,7 @@ module.exports = class Account {
 				reject(err);
 			};
 
+			let msTimeVacNoResponse = 0;
 			let loggedOn = async () => {
 				clearTimeout(this.loginTimeout);
 				this.loginTimeout = null;
@@ -65,6 +66,15 @@ module.exports = class Account {
 				this.steamUser.removeListener("steamGuard", steamGuard);
 
 				while (!this.steamUser.vac) {
+					// No response for 2 seconds, assume no bans
+					if (msTimeVacNoResponse > 2000) {
+						this.steamUser.vac = {
+							appids: []
+						};
+						break;
+					}
+
+					msTimeVacNoResponse++;
 					await new Promise(p => setTimeout(p, 1));
 				}
 
