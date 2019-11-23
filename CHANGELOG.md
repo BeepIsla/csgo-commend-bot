@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.2.6
+- Fix process being stuck on some occasions ([#147](https://github.com/BeepFelix/csgo-commend-bot/issues/147))
+
 ## 2.2.5
 - Fixed error logging
 
