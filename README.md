@@ -11,6 +11,8 @@ There also is a limit of the amount of commends you can send within a specific a
 # Future
 - Add the ability to remove commends
 - Add the ability to commend three times with one account per 24 hours instead of once every 8 hours
+- Add the ability for `serverID: "auto"` to be able to get the server ID of Valve servers
+  - I used to know a way to do this but it seems to no longer work
 
 # Requirements
 - [NodeJS **v12**](https://nodejs.org/dist/v12.9.1/) - You will likely need `node-v12.9.1-x64.msi`
@@ -32,6 +34,12 @@ Following the installation steps from `1` to `4` and simply override all files. 
   - friendly `Number`: Amount of commends you want to send as friendly
   - teaching `Number`: Amount of commends you want to send as teaching
   - leader `Number`: Amount of commends you want to send as leader
+- report:
+  - aimbot `Number`: Amount of reports you want to send as aimbotting
+  - wallhack `Number`: Amount of reports you want to send as wallhacking
+  - speedhack `Number`: Amount of reports you want to send as other hacking
+  - textabuse `Number`: Amount of reports you want to send as text abuse
+  - voiceabuse `Number`: Amount of reports you want to send as voice abuse
 - account:
   - username `String`: Username of the account you want to boost
   - password `String`: Pasword of the account you want to boost
@@ -43,6 +51,7 @@ Following the installation steps from `1` to `4` and simply override all files. 
   - maxTries `Number`: Maximum amount of tries before cancelling fetching
   - tryDelay `Number`: Amount of milliseconds to wait between each try
   - askSteamGuard `Boolean`: Set to `true` if you want the script to ask for Steam Guard code, false to just error and cancel
+- type `String`: Define the type - Valid values are `COMMEND` & `REPORT` - [Read More](#report-botting)
 - method `String`: Define the method - Valid values: `LOGIN` & `SERVER` - [Read More](#botting-method)
 - target `String`: SteamID/VanityURL/ProfileURL of target
 - serverID `String`: ServerID, **or** IP, **or** `auto` of the server - [Read More](#server-id)
@@ -81,3 +90,8 @@ The `serverID` field allows for either ServerIP, ServerID or `auto`. Make sure t
 - `auto` will automatically try and find the correct server the target is on. This works for Casual, Deathmatch or War Games on official Valve servers (Requires `cl_join_advertise` to be `1` or higher) and on any community servers (Requires `cl_join_advertise` to be `2` or higher)
   - **Using `auto` requires you to use a `fetcher` account in your config**
   - Certain privacy settings may interfer with this, before reporting an issue make sure everything is set to public in your [Steam Privacy Settings](https://steamcommunity.com/my/edit/settings)
+
+# Report Botting
+You can choose between two types, `COMMEND` and `REPORT`.
+
+There isn't much to it. Commending botting is confirmed to work, report botting I still believe doesn't work but due to popular demand and the previous one no longer working I have re-added it. With MatchID and ServerID support.

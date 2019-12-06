@@ -4,6 +4,13 @@
 		"teaching": 10,
 		"leader": 15
 	},
+	"report": {
+		"aimbot": 10,
+		"wallhack": 10,
+		"speedhack": 10,
+		"textabuse": 10,
+		"voiceabuse": 10
+	},
 	"account": {
 		"username": "",
 		"password": "",
@@ -17,6 +24,7 @@
 		"tryDelay": 2500,
 		"askSteamGuard": true
 	},
+	"type": "COMMEND",
 	"method": "SERVER",
 	"target": "https://steamcommunity.com/id/gabelogannewell",
 	"serverID": "auto",

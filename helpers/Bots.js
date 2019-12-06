@@ -16,10 +16,12 @@ let started = false;
 process.on("message", async (msg) => {
 	started = true;
 
-	const config = msg.config;
 	const chunk = msg.chunk;
-	const toCommend = msg.toCommend;
+	const target = msg.toCommend || msg.toReport;
 	const serverSteamID = msg.serverSteamID;
+	const isReport = msg.isReport;
+	const isCommend = msg.isCommend;
+	const matchID = msg.matchID;
 
 	try {
 		let done = 0;
@@ -39,19 +41,36 @@ process.on("message", async (msg) => {
 					hello: hello
 				});
 
-				await a.commendPlayer(serverSteamID, toCommend, config.matchid ? config.matchid : "0", acc.commend.friendly, acc.commend.teaching, acc.commend.leader).then((response) => {
-					process.send({
-						type: "commended",
-						username: a.username,
-						response: response
+				if (isCommend) {
+					await a.commendPlayer(serverSteamID, target, matchID, acc.commend.friendly, acc.commend.teaching, acc.commend.leader).then((response) => {
+						process.send({
+							type: "commended",
+							username: a.username,
+							response: response
+						});
+					}).catch((err) => {
+						process.send({
+							type: "commendErr",
+							username: a.username,
+							error: serializeError(err)
+						});
 					});
-				}).catch((err) => {
-					process.send({
-						type: "commendErr",
-						username: a.username,
-						error: serializeError(err)
+				} else {
+					await a.reportPlayer(serverSteamID, target, matchID, acc.report.rpt_aimbot, acc.report.rpt_wallhack, acc.report.rpt_speedhack, acc.report.rpt_teamharm, acc.report.rpt_textabuse, acc.report.rpt_voiceabuse).then((response) => {
+						process.send({
+							type: "reported",
+							username: a.username,
+							response: response,
+							confirmation: response.confirmation_id.toString()
+						});
+					}).catch((err) => {
+						process.send({
+							type: "reportErr",
+							username: a.username,
+							error: serializeError(err)
+						});
 					});
-				});
+				}
 
 				a.logOff();
 				done += 1;

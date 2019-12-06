@@ -259,6 +259,13 @@ module.exports = class Helper {
 
 		return tempArray;
 	}
+
+	static intToString(ipInt) {
+		// Copied from https://github.com/DoctorMcKay/node-stdlib/blob/3a65f4116116fb8a0a82239a9cc0db35c44558d9/components/ipv4.js
+		let buf = Buffer.alloc(4);
+		buf.writeUInt32BE(ipInt >>> 0, 0);
+		return Array.prototype.join.call(buf, ".");
+	}
 }
 
 function doRequest(method, version, qsParams = {}, responsePath = [], validator) {

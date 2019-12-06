@@ -3,6 +3,7 @@ const SteamTotp = require("steam-totp");
 const SteamID = require("steamid");
 const GameCoordinator = require("./GameCoordinator.js");
 const VDF = require("./VDF.js");
+const Helper = require("./Helper.js");
 
 module.exports = class Account {
 	constructor(isTarget = false) {
@@ -164,6 +165,50 @@ module.exports = class Account {
 	}
 
 	/**
+	 * Report a player
+	 * @param {String} serverID ServerID of our target
+	 * @param {Number} accountID AccountID of our target
+	 * @param {String} matchID Optional MatchID
+	 * @param {Boolean|Number} rpt_aimbot Do we want to report as aimbotting?
+	 * @param {Boolean|Number} rpt_wallhack Do we want to report as wallhacking?
+	 * @param {Boolean|Number} rpt_speedhack Do we want to report as other hacking?
+	 * @param {Boolean|Number} rpt_teamharm Do we want to report as griefing?
+	 * @param {Boolean|Number} rpt_textabuse Do we want to report as text abusing?
+	 * @param {Boolean|Number} rpt_voiceabuse Do we want to report as voice abusing?
+	 * @returns {Promise.<Object>}
+	 */
+	reportPlayer(serverID, accountID, matchID, rpt_aimbot, rpt_wallhack, rpt_speedhack, rpt_teamharm, rpt_textabuse, rpt_voiceabuse) {
+		return new Promise(async (resolve, reject) => {
+			this.setGamesPlayed(serverID);
+
+			// Wait for the ServerID to set
+			await new Promise(p => setTimeout(p, 50));
+
+			this.csgoUser.sendMessage(
+				730,
+				this.csgoUser.Protos.csgo.ECsgoGCMsg.k_EMsgGCCStrike15_v2_ClientReportPlayer,
+				{},
+				this.csgoUser.Protos.csgo.CMsgGCCStrike15_v2_ClientReportPlayer,
+				{
+					account_id: accountID,
+					match_id: matchID,
+					commendation: {
+						rpt_aimbot: rpt_aimbot ? 1 : 0,
+						rpt_wallhack: rpt_wallhack ? 1 : 0,
+						rpt_speedhack: rpt_speedhack ? 1 : 0,
+						rpt_teamharm: rpt_teamharm ? 1 : 0,
+						rpt_textabuse: rpt_textabuse ? 1 : 0,
+						rpt_voiceabuse: rpt_voiceabuse ? 1 : 0
+					}
+				},
+				this.csgoUser.Protos.csgo.ECsgoGCMsg.k_EMsgGCCStrike15_v2_ClientReportResponse,
+				this.csgoUser.Protos.csgo.CMsgGCCStrike15_v2_ClientReportResponse,
+				20000
+			).then(resolve).catch(reject);
+		});
+	}
+
+	/**
 	 * Get the server our target is on
 	 * @param {Number} accountid Target account ID
 	 * @return {Promise.<Object>}
@@ -253,6 +298,43 @@ module.exports = class Account {
 						serverIP: data.res.server_address
 					});
 				}).catch(reject);
+			}).catch(reject);
+		});
+	}
+
+	getTargetServerValve(accountid) {
+		return new Promise((resolve, reject) => {
+			this.csgoUser.sendMessage(
+				730,
+				this.csgoUser.Protos.csgo.ECsgoGCMsg.k_EMsgGCCStrike15_v2_ClientRequestWatchInfoFriends2,
+				{},
+				this.csgoUser.Protos.csgo.CMsgGCCStrike15_v2_ClientRequestWatchInfoFriends,
+				{
+					account_ids: [
+						accountid
+					]
+				},
+				this.csgoUser.Protos.csgo.ECsgoGCMsg.k_EMsgGCCStrike15_v2_WatchInfoUsers,
+				this.csgoUser.Protos.csgo.CMsgGCCStrike15_v2_WatchInfoUsers,
+				20000
+			).then((info) => {
+				if (!info.watchable_match_infos) {
+					reject(new Error("Got no CSGO response data"));
+					return;
+				}
+
+				if (!info.watchable_match_infos[0].server_id) {
+					reject(new Error("Got no Valve server ID"));
+					return;
+				}
+
+				resolve({
+					// This used to be the real servers IP and ID but it no longer seems to be
+					serverID: info.watchable_match_infos[0].server_id.toString(),
+					isValve: true,
+					serverIP: Helper.intToString(info.watchable_match_infos[0].server_ip),
+					matchID: info.watchable_match_infos[0].match_id.toString()
+				});
 			}).catch(reject);
 		});
 	}

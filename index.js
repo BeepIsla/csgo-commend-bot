@@ -23,7 +23,12 @@ const colors = {
 	white: "\x1b[37m"
 };
 const helper = new Helper(config.steamWebAPIKey);
-let totalNeeded = Math.max(config.commend.friendly, config.commend.teaching, config.commend.leader);
+let totalNeeded = 0;
+if (config.type && config.type.toUpperCase() === "REPORT") {
+	totalNeeded = Math.max(config.report.aimbot, config.report.wallhack, config.report.speedhack, config.report.teamharm, config.report.textabuse, config.report.voiceabuse);
+} else {
+	totalNeeded = Math.max(config.commend.friendly, config.commend.teaching, config.commend.leader);
+}
 let db = undefined;
 let isNewVersion = false;
 let totalSuccess = 0;
@@ -38,6 +43,16 @@ console.log = (color, ...args) => {
 (async () => {
 	if (!["LOGIN", "SERVER"].includes(config.method.toUpperCase())) {
 		console.log("red", "The \"method\" option only allows for \"LOGIN\" or \"SERVER\" value. Please refer to the README for more information.");
+		return;
+	}
+
+	if (!["REPORT", "COMMEND"].includes(config.type.toUpperCase())) {
+		console.log("red", "The \"type\" option only allows for \"REPORT\" or \"COMMEND\" value. Please refer to the README for more information.");
+		return;
+	}
+
+	if (config.method.toUpperCase() === "LOGIN" && config.type.toUpperCase() === "REPORT") {
+		console.log("red", "You cannot use the \"REPORT\" type and \"LOGIN\" method at the same time. You wouldn't want to report yourself?");
 		return;
 	}
 
@@ -99,6 +114,7 @@ console.log = (color, ...args) => {
 
 	let targetAcc = undefined;
 	let serverToUse = undefined;
+	let matchID = config.matchID;
 
 	if (config.method.toUpperCase() === "LOGIN") {
 		console.log("white", "Getting an available server");
@@ -125,13 +141,28 @@ console.log = (color, ...args) => {
 	}
 
 	// Inject what to commend with in our accounts
-	for (let i = 0; i < accountsToUse.length; i++) {
-		let chosen = accountsToUse.filter(a => typeof a.commend === "object").length;
+	if (config.type.toUpperCase() === "REPORT") {
+		for (let i = 0; i < accountsToUse.length; i++) {
+			let chosen = accountsToUse.filter(a => typeof a.report === "object").length;
 
-		accountsToUse[i].commend = {
-			friendly: config.commend.friendly > chosen ? true : false,
-			teaching: config.commend.teaching > chosen ? true : false,
-			leader: config.commend.leader > chosen ? true : false
+			accountsToUse[i].report = {
+				rpt_aimbot: config.report.aimbot > chosen ? true : false,
+				rpt_wallhack: config.report.wallhack > chosen ? true : false,
+				rpt_speedhack: config.report.speedhack > chosen ? true : false,
+				rpt_teamharm: config.report.teamharm > chosen ? true : false,
+				rpt_textabuse: config.report.textabuse > chosen ? true : false,
+				rpt_voiceabuse: config.report.voiceabuse > chosen ? true : false
+			}
+		}
+	} else {
+		for (let i = 0; i < accountsToUse.length; i++) {
+			let chosen = accountsToUse.filter(a => typeof a.commend === "object").length;
+
+			accountsToUse[i].commend = {
+				friendly: config.commend.friendly > chosen ? true : false,
+				teaching: config.commend.teaching > chosen ? true : false,
+				leader: config.commend.leader > chosen ? true : false
+			}
 		}
 	}
 
@@ -162,7 +193,9 @@ console.log = (color, ...args) => {
 			}
 
 			console.log("white", "Parsed server input to " + serverToUse);
-		} else {
+		}
+
+		if (config.serverID.toUpperCase() === "AUTO" || config.matchID.toUpperCase() === "AUTO") {
 			console.log("blue", "Logging into fetcher account...");
 			let fetcher = new Account(config.fetcher.askSteamGuard);
 			await fetcher.login(config.fetcher.username, config.fetcher.password, config.fetcher.sharedSecret);
@@ -170,36 +203,79 @@ console.log = (color, ...args) => {
 			console.log("blue", "Trying to fetch target " + config.fetcher.maxTries + " time" + (config.fetcher.maxTries === 1 ? "" : "s") + " with a delay of " + config.fetcher.tryDelay + "ms");
 
 			let tries = 0;
-			while (!serverToUse) {
-				tries++;
+			if (config.serverID.toUpperCase() === "AUTO") {
+				while (!serverToUse) {
+					tries++;
 
-				if (tries > config.fetcher.maxTries) {
-					console.log("red", "Failed to find server after " + tries + " tr" + (tries === 1 ? "y" : "ies"));
-					break;
-				}
-
-				serverToUse = await fetcher.getTargetServer(targetAcc).catch((err) => {
-					if (err.message) {
-						console.log("red", err.message);
-					} else {
-						console.error(err);
+					if (tries > config.fetcher.maxTries) {
+						console.log("red", "Failed to find server after " + tries + " tr" + (tries === 1 ? "y" : "ies"));
+						break;
 					}
-				});
+
+					serverToUse = await fetcher.getTargetServer(targetAcc).catch((err) => {
+						if (err.message) {
+							console.log("red", err.message);
+						} else {
+							console.error(err);
+						}
+					});
+
+					if (!serverToUse) {
+						/*serverToUse = await fetcher.getTargetServerValve(targetAcc).catch((err) => {
+							if (err.message) {
+								console.log("red", err.message);
+							} else {
+								console.error(err);
+							}
+						});*/
+
+						await new Promise(p => setTimeout(p, config.fetcher.tryDelay));
+					}
+				}
 
 				if (!serverToUse) {
-					await new Promise(p => setTimeout(p, config.fetcher.tryDelay));
+					await db.close();
+					return;
 				}
+
+				console.log("green", "Found target on " + (serverToUse.isValve ? "Valve" : "Community") + " server " + serverToUse.serverID + " after " + tries + " tr" + (tries === 1 ? "y" : "ies") + " " + (serverToUse.isValve ? "" : ("(" + serverToUse.serverIP + ")")));
+				serverToUse = serverToUse.serverID;
+			}
+
+			tries = 0;
+			let matchIDFind = null;
+			if (config.matchID.toUpperCase() === "AUTO") {
+				while (!matchIDFind) {
+					tries++;
+
+					if (tries > config.fetcher.maxTries) {
+						console.log("red", "Failed to find server after " + tries + " tr" + (tries === 1 ? "y" : "ies"));
+						break;
+					}
+
+					matchIDFind = await fetcher.getTargetServerValve(targetAcc).catch((err) => {
+						if (err.message) {
+							console.log("red", err.message);
+						} else {
+							console.error(err);
+						}
+					});
+
+					if (!matchIDFind) {
+						await new Promise(p => setTimeout(p, config.fetcher.tryDelay));
+					}
+				}
+
+				if (!matchIDFind) {
+					await db.close();
+					return;
+				}
+
+				matchID = matchIDFind.matchID || matchID;
+				console.log("green", "Found target on match " + matchID);
 			}
 
 			fetcher.logOff();
-
-			if (!serverToUse) {
-				await db.close();
-				return;
-			}
-
-			console.log("green", "Found target on " + (serverToUse.isValve ? "Valve" : "Community") + " server " + serverToUse.serverID + " after " + tries + " tr" + (tries === 1 ? "y" : "ies") + " " + (serverToUse.isValve ? "" : ("(" + serverToUse.serverIP + ")")));
-			serverToUse = serverToUse.serverID;
 		}
 	}
 
@@ -215,27 +291,16 @@ console.log = (color, ...args) => {
 		return;
 	}
 
-	if (info.players >= info.max_players) {
-		console.log("red", "Server is full and cannot be used");
-
-		if (targetAcc instanceof Target) {
-			targetAcc.logOff();
-		}
-
-		await db.close();
-		return;
-	}
-
 	for (let i = 0; i < chunks.length; i++) {
 		console.log("white", "Logging in on chunk " + (i + 1) + "/" + chunks.length);
 
 		// Do commends
-		let result = await handleChunk(chunks[i], (targetAcc instanceof Target ? targetAcc.accountid : targetAcc), serverToUse);
+		let result = await handleChunk(chunks[i], (targetAcc instanceof Target ? targetAcc.accountid : targetAcc), serverToUse, matchID);
 
 		totalSuccess += result.success.length;
 		totalFail += result.error.length;
 
-		console.log("white", "Chunk " + (i + 1) + "/" + chunks.length + " finished with " + result.success.length + " successful commend" + (result.success.length === 1 ? "" : "s") + " and " + result.error.length + " failed commend" + (result.error.length === 1 ? "" : "s"));
+		console.log("white", "Chunk " + (i + 1) + "/" + chunks.length + " finished with " + result.success.length + " successful " + (config.type.toUpperCase() === "REPORT" ? "report" : "commend") + (result.success.length === 1 ? "" : "s") + " and " + result.error.length + " failed " + (config.type.toUpperCase() === "REPORT" ? "report" : "commend") + (result.error.length === 1 ? "" : "s"));
 
 		// Wait a little bit and relog target if needed
 		if ((i + 1) < chunks.length) {
@@ -250,13 +315,13 @@ console.log = (color, ...args) => {
 	}
 
 	await db.close();
-	console.log("magenta", "Finished all chunks with a total of " + totalSuccess + " successful and " + totalFail + " failed commend" + (totalFail === 1 ? "" : "s"));
+	console.log("magenta", "Finished all chunks with a total of " + totalSuccess + " successful and " + totalFail + " failed " + (config.type.toUpperCase() === "REPORT" ? "report" : "commend") + (totalFail === 1 ? "" : "s"));
 
 	// Force exit the process if it doesn't happen automatically within 15 seconds
 	setTimeout(process.exit, 15000, 1).unref();
 })();
 
-function handleChunk(chunk, toCommend, serverSteamID) {
+function handleChunk(chunk, toCommend, serverSteamID, matchID) {
 	return new Promise(async (resolve, reject) => {
 		let child = ChildProcess.fork("./Bots.js", [], {
 			cwd: path.join(__dirname, "helpers"),
@@ -272,12 +337,27 @@ function handleChunk(chunk, toCommend, serverSteamID) {
 
 		child.on("message", async (msg) => {
 			if (msg.type === "ready") {
-				child.send({
-					config: config,
-					chunk: chunk,
-					toCommend: toCommend,
-					serverSteamID: serverSteamID
-				});
+				if (config.type.toUpperCase() === "COMMEND") {
+					child.send({
+						isCommend: true,
+						isReport: false,
+
+						chunk: chunk,
+						toCommend: toCommend,
+						serverSteamID: serverSteamID,
+						matchID: matchID
+					});
+				} else {
+					child.send({
+						isCommend: false,
+						isReport: true,
+
+						chunk: chunk,
+						toReport: toCommend /* Variable is named "toCommend" but its just the account ID so whatever */,
+						serverSteamID: serverSteamID,
+						matchID: matchID
+					});
+				}
 				return;
 			}
 
@@ -296,10 +376,10 @@ function handleChunk(chunk, toCommend, serverSteamID) {
 				return;
 			}
 
-			if (msg.type === "commended") {
+			if (msg.type === "commended" || msg.type === "reported") {
 				await db.run("UPDATE accounts SET lastCommend = " + Date.now() + " WHERE username = \"" + msg.username + "\"").catch(() => { });
 
-				if (msg.response.response_result === 2) {
+				if (msg.response.response_result === 2 && msg.type === "commended") {
 					// Already commended
 					res.error.push(msg.response);
 
@@ -313,23 +393,27 @@ function handleChunk(chunk, toCommend, serverSteamID) {
 					// Success commend
 					res.success.push(msg.response);
 
-					console.log("green", "[" + msg.username + "] Successfully sent a commend with response code " + msg.response.response_result + " - Remaining Commends: " + msg.response.tokens + " (" + (res.error.length + res.success.length) + "/" + chunk.length + ")");
+					if (msg.type === "commended") {
+						console.log("green", "[" + msg.username + "] Successfully sent a commend with response code " + msg.response.response_result + " - Remaining Commends: " + msg.response.tokens + " (" + (res.error.length + res.success.length) + "/" + chunk.length + ")");
+					} else {
+						console.log("green", "[" + msg.username + "] Successfully sent a report with response code " + msg.response.response_result + " - " + msg.confirmation + " (" + (res.error.length + res.success.length) + "/" + chunk.length + ")");
+					}
 
 					await db.run("INSERT INTO commended (username, commended, timestamp) VALUES (\"" + msg.username + "\", " + toCommend + ", " + Date.now() + ")").catch(() => { });
-					return;	
+					return;
 				}
 
 				// Unknown response code
 				res.error.push(msg.response);
 
-				console.log("red", "[" + msg.username + "] Commended but got invalid success code " + msg.response.response_result + " (" + (res.error.length + res.success.length) + "/" + chunk.length + ")");
+				console.log("red", "[" + msg.username + "] " + (config.type.toUpperCase() === "REPORT" ? "Reported" : "Commended") + " but got invalid success code " + msg.response.response_result + " (" + (res.error.length + res.success.length) + "/" + chunk.length + ")");
 				return;
 			}
 
-			if (msg.type === "commendErr") {
+			if (msg.type === "commendErr" || msg.type === "reportErr") {
 				res.error.push(msg.error);
 
-				console.log("red", "[" + msg.username + "] Failed to commend (" + (res.error.length + res.success.length) + "/" + chunk.length + ")", msg.error);
+				console.log("red", "[" + msg.username + "] Failed to " + (config.type.toUpperCase() === "REPORT" ? "report" : "commend") + " (" + (res.error.length + res.success.length) + "/" + chunk.length + ")", msg.error);
 
 				await db.run("UPDATE accounts SET lastCommend = " + Date.now() + " WHERE username = \"" + msg.username + "\"").catch(() => { });
 				return;

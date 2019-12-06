@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.3.0
+- Removed check whether or not server is full
+- Added report functionality back
+  - Set `type` in the config to `REPORT`
+- Added auto matchID (**Requires fetcher**)
+  - Set `matchID` to `auto` to use
+  - Only works on Valve Matchmaking servers
+
 ## 2.2.6
 - Fix process being stuck on some occasions ([#147](https://github.com/BeepFelix/csgo-commend-bot/issues/147))
 
