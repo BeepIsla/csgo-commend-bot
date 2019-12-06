@@ -41,6 +41,10 @@ console.log = (color, ...args) => {
 }
 
 (async () => {
+	if (typeof config.type === "undefined") {
+		config.type = "COMMEND";
+	}
+
 	if (!["LOGIN", "SERVER"].includes(config.method.toUpperCase())) {
 		console.log("red", "The \"method\" option only allows for \"LOGIN\" or \"SERVER\" value. Please refer to the README for more information.");
 		return;
