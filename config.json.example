@@ -8,6 +8,7 @@
 		"aimbot": 10,
 		"wallhack": 10,
 		"speedhack": 10,
+		"teamharm": 10,
 		"textabuse": 10,
 		"voiceabuse": 10
 	},
