@@ -500,7 +500,7 @@ function handleChunk(chunk, toCommend, serverSteamID, matchID) {
 					await db.run("UPDATE accounts SET operational = 0 WHERE \"username\" = \"" + msg.username + "\"");
 				} else {
 					// Add more possible errors which occur if proxies are not working correctly
-					if (((typeof msg.error.message === "string" && msg.error.message.test(/^HTTP CONNECT \d+.*$/i)) || [ "Failed to log in within given 60000ms", "Proxy connection timed out" ].includes(msg.error.message) || [ "ETIMEDOUT"].includes(msg.error.code)) && config.proxy.enabled) {
+					if (((typeof msg.error.message === "string" && /^HTTP CONNECT \d+.*$/i.test(msg.error.message)) || [ "Failed to log in within given 60000ms", "Proxy connection timed out" ].includes(msg.error.message) || [ "ETIMEDOUT"].includes(msg.error.code)) && config.proxy.enabled) {
 						console.log("red", "[" + msg.username + "] Failed to login and due to proxy timeout (" + (res.error.length + res.success.length) + "/" + chunk.length + ")", msg.error);
 					} else {
 						console.log("red", "[" + msg.username + "] Failed to login and has been marked as invalid (" + (res.error.length + res.success.length) + "/" + chunk.length + ")", msg.error);
