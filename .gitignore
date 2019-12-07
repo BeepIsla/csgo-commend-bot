@@ -6,3 +6,4 @@ config.json
 test*.js
 accounts*.sqlite
 test*.txt
+proxies*

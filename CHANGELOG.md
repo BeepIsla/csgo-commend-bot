@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.4.0
+- Added proxy support - Thanks [@UnbreakCode](http://github.com/UnbreakCode)
+  - [Read More](./README.md#proxies)
+
 ## 2.3.0
 - Removed check whether or not server is full
 - Added report functionality back

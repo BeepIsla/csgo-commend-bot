@@ -32,7 +32,7 @@ process.on("message", async (msg) => {
 				username: acc.username
 			});
 
-			const a = new Account();
+			const a = new Account(false, acc.proxy);
 
 			a.login(acc.username, acc.password, acc.sharedSecret).then(async (hello) => {
 				process.send({

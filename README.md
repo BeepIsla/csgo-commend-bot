@@ -5,8 +5,8 @@ Please view the [Changelog](./CHANGELOG.md) for a simple list of changes
 
 ---
 
-# Restrictions and Issues
-There also is a limit of the amount of commends you can send within a specific amount of time, that limit is set to 20. Due to this I recommend leaving `perChunk` and `betweenChunks` default but you can always experiment around.
+# Restrictions
+Without proxies you are limited to ~20 commends per 5 minutes. [Read more about proxies](#proxies)
 
 # Future
 - Add the ability to remove commends
@@ -51,6 +51,10 @@ Following the installation steps from `1` to `4` and simply override all files. 
   - maxTries `Number`: Maximum amount of tries before cancelling fetching
   - tryDelay `Number`: Amount of milliseconds to wait between each try
   - askSteamGuard `Boolean`: Set to `true` if you want the script to ask for Steam Guard code, false to just error and cancel
+- proxy:
+  - enabled `Boolean`: Whether or not proxies are suppose to be used
+  - file `String`: The filename you want to load proxies from (With extension like `.txt` or `.json`) - [Read More](#proxies)
+  - switchProxyEveryXaccounts `Number`: One proxy per X accounts
 - type `String`: Define the type - Valid values are `COMMEND` & `REPORT` - [Read More](#report-botting)
 - method `String`: Define the method - Valid values: `LOGIN` & `SERVER` - [Read More](#botting-method)
 - target `String`: SteamID/VanityURL/ProfileURL of target
@@ -95,3 +99,26 @@ The `serverID` field allows for either ServerIP, ServerID or `auto`. Make sure t
 You can choose between two types, `COMMEND` and `REPORT`.
 
 There isn't much to it. Commending botting is confirmed to work, report botting I still believe doesn't work but due to popular demand and the previous one no longer working I have re-added it. With MatchID and ServerID support.
+
+# Proxies
+Proxies are simple to use, just follow the example config to set them up. Your proxy file will need to be either a JSON array with each element being one HTTP proxy *or* a plain text file with each line being one proxy. One proxy can do ~20 commends, so I recommend leaving `switchProxyEveryXaccounts` at `20`.
+
+**ONLY HTTP proxies are supported**
+
+JSON Example:
+```JSON
+[
+    "127.0.0.1:12345",
+    "127.0.0.1:67890",
+    "127.0.0.2:12345",
+    "127.0.0.2:67890"
+]
+```
+
+Plain text example:
+```
+127.0.0.1:12345
+127.0.0.1:67890
+127.0.0.2:12345
+127.0.0.2:67890
+```

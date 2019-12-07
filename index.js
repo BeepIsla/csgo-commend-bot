@@ -3,6 +3,7 @@ const ChildProcess = require("child_process");
 const path = require("path");
 const SteamUser = require("steam-user");
 const fs = require("fs");
+const URL = require("url");
 const Target = require("./helpers/Target.js");
 const Helper = require("./helpers/Helper.js");
 const Account = require("./helpers/account.js");
@@ -29,6 +30,7 @@ if (config.type && config.type.toUpperCase() === "REPORT") {
 } else {
 	totalNeeded = Math.max(config.commend.friendly, config.commend.teaching, config.commend.leader);
 }
+let proxies = undefined;
 let db = undefined;
 let isNewVersion = false;
 let totalSuccess = 0;
@@ -101,6 +103,45 @@ console.log = (color, ...args) => {
 		await helper.downloadProtobufs(__dirname);
 	}
 
+	if (config.proxy && config.proxy.file && config.proxy.switchProxyEveryXaccounts && config.proxy.enabled) {
+		console.log("white", "Loading proxies...");
+		let proxyFilePath = path.join(__dirname, config.proxy.file);
+		if (!fs.existsSync(proxyFilePath)) {
+			console.log("red", "Could not find proxy file \"" + config.proxy.file + "\" (" + proxyFilePath + ")");
+			return;
+		}
+
+		let proxiesRaw = fs.readFileSync(proxyFilePath).toString();
+		try {
+			proxies = JSON.parse(proxiesRaw);
+		} catch {
+			proxies = proxiesRaw.split("\n").map((l) => {
+				l = l.trim();
+				return l;
+			}).filter((l) => {
+				return l.length > 0;
+			});
+		}
+
+		proxies = proxies.map((proxy) => {
+			try {
+				let url = new URL.URL(proxy);
+				url.protocol = "http:"; // Force HTTP protcol
+				return url.href;
+			} catch {
+				if (!proxy.startsWith("http://")) {
+					proxy = "http://" + proxy;
+				}
+
+				return proxy;
+			}
+		});
+
+		console.log("green", "Got " + proxies.length + " prox" + (proxies.length === 1 ? "y" : "ies"));
+	} else {
+		proxies = [];
+	}
+
 	console.log("white", "Opening database...");
 	db = await sqlite.open("./accounts.sqlite");
 
@@ -145,10 +186,17 @@ console.log = (color, ...args) => {
 	}
 
 	// Inject what to commend with in our accounts
+	let proxySwitch = 0;
+
 	if (config.type.toUpperCase() === "REPORT") {
 		for (let i = 0; i < accountsToUse.length; i++) {
 			let chosen = accountsToUse.filter(a => typeof a.report === "object").length;
 
+			if (i > 0 && (i % config.proxy.switchProxyEveryXaccounts) === 0 && config.proxy && config.proxy.enabled) {
+				proxySwitch++;
+			}
+
+			accountsToUse[i].proxy = proxies[proxySwitch];
 			accountsToUse[i].report = {
 				rpt_aimbot: config.report.aimbot > chosen ? true : false,
 				rpt_wallhack: config.report.wallhack > chosen ? true : false,
@@ -162,6 +210,11 @@ console.log = (color, ...args) => {
 		for (let i = 0; i < accountsToUse.length; i++) {
 			let chosen = accountsToUse.filter(a => typeof a.commend === "object").length;
 
+			if (i > 0 && (i % config.proxy.switchProxyEveryXaccounts) === 0 && config.proxy && config.proxy.enabled) {
+				proxySwitch++;
+			}
+
+			accountsToUse[i].proxy = proxies[proxySwitch];
 			accountsToUse[i].commend = {
 				friendly: config.commend.friendly > chosen ? true : false,
 				teaching: config.commend.teaching > chosen ? true : false,
@@ -446,8 +499,13 @@ function handleChunk(chunk, toCommend, serverSteamID, matchID) {
 					console.log("red", "[" + msg.username + "] Has been VAC banned in CSGO and has been marked as invalid (" + (res.error.length + res.success.length) + "/" + chunk.length + ")", msg.error);
 					await db.run("UPDATE accounts SET operational = 0 WHERE \"username\" = \"" + msg.username + "\"");
 				} else {
-					console.log("red", "[" + msg.username + "] Failed to login and has been marked as invalid (" + (res.error.length + res.success.length) + "/" + chunk.length + ")", msg.error);
-					await db.run("UPDATE accounts SET operational = 0 WHERE \"username\" = \"" + msg.username + "\"");
+					// Add more possible errors which occur if proxies are not working correctly
+					if (((typeof msg.error.message === "string" && msg.error.message.test(/^HTTP CONNECT \d+.*$/i)) || [ "Failed to log in within given 60000ms", "Proxy connection timed out" ].includes(msg.error.message) || [ "ETIMEDOUT"].includes(msg.error.code)) && config.proxy.enabled) {
+						console.log("red", "[" + msg.username + "] Failed to login and due to proxy timeout (" + (res.error.length + res.success.length) + "/" + chunk.length + ")", msg.error);
+					} else {
+						console.log("red", "[" + msg.username + "] Failed to login and has been marked as invalid (" + (res.error.length + res.success.length) + "/" + chunk.length + ")", msg.error);
+						await db.run("UPDATE accounts SET operational = 0 WHERE \"username\" = \"" + msg.username + "\"");
+					}
 				}
 				return;
 			}

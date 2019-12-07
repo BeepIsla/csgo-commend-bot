@@ -25,6 +25,11 @@
 		"tryDelay": 2500,
 		"askSteamGuard": true
 	},
+	"proxy": {
+		"enabled": true,
+		"file": "proxies.txt",
+		"switchProxyEveryXaccounts": 20
+	},
 	"type": "COMMEND",
 	"method": "SERVER",
 	"target": "https://steamcommunity.com/id/gabelogannewell",
