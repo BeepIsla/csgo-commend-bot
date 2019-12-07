@@ -32,12 +32,19 @@ const helper = new Helper(config.steamWebAPIKey);
 				"Add account(s) to database",
 				"List not working accounts",
 				"Remove all not working accounts",
+				"Get last commend target and time",
 				"Reset Database",
 				"Exit"
 			]
 		});
 
 		switch (r.response) {
+			case "Get last commend target and time": {
+				let lastCommend = await db.get("SELECT username,lastCommend FROM accounts ORDER BY lastCommend DESC LIMIT 1");
+				console.log("The latest commend has been sent by account " + lastCommend.username + " at " + new Date(lastCommend.lastCommend).toLocaleString());
+				break;
+			}
+
 			case "Remove all not working accounts": {
 				let _export = await inquirer.prompt({
 					type: "list",
