@@ -31,12 +31,37 @@ const helper = new Helper(config.steamWebAPIKey);
 				"Remove account from database",
 				"Add account(s) to database",
 				"List not working accounts",
+				"Remove all not working accounts",
 				"Reset Database",
 				"Exit"
 			]
 		});
 
 		switch (r.response) {
+			case "Remove all not working accounts": {
+				let _export = await inquirer.prompt({
+					type: "list",
+					name: "response",
+					message: "Do you want to export all not working accounts to a file called \"notworking.txt\" as well?",
+					choices: [
+						"Yes",
+						"No",
+					]
+				});
+
+				if (_export.response === "Yes") {
+					let data = await db.all("SELECT username, password FROM accounts WHERE operational = 0");
+					fs.writeFileSync("notworking.txt", data.map(s => s.username + ":" + s.password).join("\n"));
+				}
+
+				await db.run("DELETE FROM accounts WHERE operational = 0");
+
+				// We keep the "commended" list, if the account start working again for some reason we don't want to have the list wiped
+
+				console.log("Successfully removed all not working accounts");
+				break;
+			}
+
 			case "Reset Database": {
 				let confirm = await inquirer.prompt({
 					type: "confirm",
