@@ -4,4 +4,5 @@ data
 accounts.json
 config.json
 test*.js
-accounts.sqlite
+accounts*.sqlite
+test*.txt
