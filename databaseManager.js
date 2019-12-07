@@ -238,6 +238,21 @@ const helper = new Helper(config.steamWebAPIKey);
 			}
 
 			case "Export account list": {
+				let _export = await inquirer.prompt({
+					type: "list",
+					name: "response",
+					message: "Do you want to export all accounts or only working ones?",
+					choices: [
+						"Export all accounts",
+						"Exports only working accounts",
+					]
+				});
+
+				let query = "SELECT username, password FROM accounts";
+				if (_export.response === "Exports only working accounts") {
+					query = "SELECT username, password FROM accounts WHERE operational = 1";
+				}
+
 				let input = await inquirer.prompt({
 					type: "input",
 					name: "input",
@@ -250,7 +265,7 @@ const helper = new Helper(config.steamWebAPIKey);
 					break;
 				}
 
-				let data = await db.all("SELECT username, password FROM accounts");
+				let data = await db.all(query);
 				if (data.length <= 0) {
 					console.log("No data to export");
 					break;
