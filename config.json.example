@@ -26,7 +26,7 @@
 		"askSteamGuard": true
 	},
 	"proxy": {
-		"enabled": true,
+		"enabled": false,
 		"file": "proxies.txt",
 		"switchProxyEveryXaccounts": 20
 	},
