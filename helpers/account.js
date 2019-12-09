@@ -193,14 +193,12 @@ module.exports = class Account {
 				{
 					account_id: accountID,
 					match_id: matchID,
-					commendation: {
-						rpt_aimbot: rpt_aimbot ? 1 : 0,
-						rpt_wallhack: rpt_wallhack ? 1 : 0,
-						rpt_speedhack: rpt_speedhack ? 1 : 0,
-						rpt_teamharm: rpt_teamharm ? 1 : 0,
-						rpt_textabuse: rpt_textabuse ? 1 : 0,
-						rpt_voiceabuse: rpt_voiceabuse ? 1 : 0
-					}
+					rpt_aimbot: rpt_aimbot ? 1 : 0,
+					rpt_wallhack: rpt_wallhack ? 1 : 0,
+					rpt_speedhack: rpt_speedhack ? 1 : 0,
+					rpt_teamharm: rpt_teamharm ? 1 : 0,
+					rpt_textabuse: rpt_textabuse ? 1 : 0,
+					rpt_voiceabuse: rpt_voiceabuse ? 1 : 0
 				},
 				this.csgoUser.Protos.csgo.ECsgoGCMsg.k_EMsgGCCStrike15_v2_ClientReportResponse,
 				this.csgoUser.Protos.csgo.CMsgGCCStrike15_v2_ClientReportResponse,
