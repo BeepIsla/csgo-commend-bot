@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.4.1
+- Fix report bot
+
 ## 2.4.0
 - Added proxy support - Thanks [@UnbreakCode](http://github.com/UnbreakCode)
   - [Read More](./README.md#proxies)
