@@ -6,14 +6,14 @@ const VDF = require("./VDF.js");
 const Helper = require("./Helper.js");
 
 module.exports = class Account {
-	constructor(isTarget = false, proxy = undefined) {
+	constructor(isTarget = false, proxy = undefined, debug = false) {
 		this.steamUser = new SteamUser({
 			autoRelogin: false,
 			enablePicsCache: false,
 			picsCacheAll: false,
 			httpProxy: proxy
 		});
-		this.csgoUser = new GameCoordinator(this.steamUser);
+		this.csgoUser = new GameCoordinator(this.steamUser, debug);
 		this.loginTimeout = null;
 		this.isTarget = isTarget;
 	}

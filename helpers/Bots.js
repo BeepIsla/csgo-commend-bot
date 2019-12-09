@@ -22,6 +22,7 @@ process.on("message", async (msg) => {
 	const isReport = msg.isReport;
 	const isCommend = msg.isCommend;
 	const matchID = msg.matchID;
+	const debug = msg.debug || false;
 
 	try {
 		let done = 0;
@@ -32,7 +33,7 @@ process.on("message", async (msg) => {
 				username: acc.username
 			});
 
-			const a = new Account(false, acc.proxy);
+			const a = new Account(false, acc.proxy, debug);
 
 			a.login(acc.username, acc.password, acc.sharedSecret).then(async (hello) => {
 				process.send({

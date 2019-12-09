@@ -7,3 +7,4 @@ test*.js
 accounts*.sqlite
 test*.txt
 proxies*
+debug

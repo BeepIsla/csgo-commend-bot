@@ -1,12 +1,27 @@
 const Events = require("events");
+const fs = require("fs");
+const path = require("path");
 const ByteBuffer = require("bytebuffer");
 const Protos = require("./Protos.js");
 
 module.exports = class GameCoordinator extends Events {
-	constructor(steamUser) {
+	constructor(steamUser, debug = false) {
 		super();
 
+		if (debug) {
+			this.debugPath = path.join(__dirname, "..", "debug");
+			if (!fs.existsSync(this.debugPath)) {
+				fs.mkdirSync(this.debugPath);
+			}
+
+			this.debugPath = path.join(this.debugPath, Date.now().toString());
+			if (!fs.existsSync(this.debugPath)) {
+				fs.mkdirSync(this.debugPath);
+			}
+		}
+
 		this.steamUser = steamUser;
+		this.debug = debug;
 		this.Protos = Protos([
 			{
 				name: "csgo",
@@ -103,6 +118,10 @@ module.exports = class GameCoordinator extends Events {
 					encoded = protobuf.encode(message);
 				}
 
+				if (this.debug) {
+					fs.writeFileSync(path.join(this.debugPath, Date.now() + "_out_" + header), protobuf ? encoded.finish() : encoded);
+				}
+
 				this.steamUser._send({
 					msg: header,
 					proto: proto
@@ -122,6 +141,10 @@ module.exports = class GameCoordinator extends Events {
 								delete this.steamUser._handlerManager._handlers[responseHeader];
 							}
 						}
+					}
+
+					if (this.debug) {
+						fs.writeFileSync(path.join(this.debugPath, Date.now() + "_in_" + responseHeader), body.toBuffer ? body.toBuffer() : body);
 					}
 
 					if (!responseProtobuf) {
@@ -151,6 +174,10 @@ module.exports = class GameCoordinator extends Events {
 			}
 			this.steamUser.sendToGC(appid, header, proto, protobuf ? encoded.finish() : encoded);
 
+			if (this.debug) {
+				fs.writeFileSync(path.join(this.debugPath, Date.now() + "_in_5452_" + header), protobuf ? encoded.finish() : encoded);
+			}
+
 			if (!responseHeader) {
 				resolve();
 				return;
@@ -166,6 +193,10 @@ module.exports = class GameCoordinator extends Events {
 				if (msgType === responseHeader) {
 					clearTimeout(sendTimeout);
 					this.removeListener("allMsg", sendMessageResponse);
+
+					if (this.debug) {
+						fs.writeFileSync(path.join(this.debugPath, Date.now() + "_in_5453_" + responseHeader), payload);
+					}
 
 					if (!responseProtobuf) {
 						resolve(payload);

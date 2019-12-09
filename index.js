@@ -223,6 +223,10 @@ console.log = (color, ...args) => {
 		}
 	}
 
+	if (config.debug) {
+		console.log(accountsToUse);
+	}
+
 	console.log("white", "Chunking " + accountsToUse.length + " account" + (accountsToUse.length === 1 ? "" : "s") + " into groups of " + config.perChunk + "...");
 	let chunks = helper.chunkArray(accountsToUse, config.perChunk);
 
@@ -402,7 +406,9 @@ function handleChunk(chunk, toCommend, serverSteamID, matchID) {
 						chunk: chunk,
 						toCommend: toCommend,
 						serverSteamID: serverSteamID,
-						matchID: matchID
+						matchID: matchID,
+
+						debug: config.debug
 					});
 				} else {
 					child.send({
@@ -412,7 +418,9 @@ function handleChunk(chunk, toCommend, serverSteamID, matchID) {
 						chunk: chunk,
 						toReport: toCommend /* Variable is named "toCommend" but its just the account ID so whatever */,
 						serverSteamID: serverSteamID,
-						matchID: matchID
+						matchID: matchID,
+
+						debug: config.debug
 					});
 				}
 				return;
