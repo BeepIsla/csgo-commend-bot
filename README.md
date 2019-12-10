@@ -58,8 +58,8 @@ Following the installation steps from `1` to `4` and simply override all files. 
 - type `String`: Define the type - Valid values are `COMMEND` & `REPORT` - [Read More](#report-botting)
 - method `String`: Define the method - Valid values: `LOGIN` & `SERVER` - [Read More](#botting-method)
 - target `String`: SteamID/VanityURL/ProfileURL of target
-- serverID `String`: ServerID, **or** IP, **or** `auto` of the server - [Read More](#server-id)
-- matchID `String`: Optional match ID, typically just `"0"` anyways - I always use `"0"`.
+- serverID `String`: ServerID, **or** IP, **or** `auto` of the server - [Read More](#server-id-&-match-id)
+- matchID `String`: Optional match ID (Use `"0"` if you don't want to use one) - [Read More](#server-id-&-match-id)
 - perChunk `Number`: `toSend` will be split into parts of `perChunk` size
 - betweenChunks `Number`: Cooldown in milliseconds to wait after each part/chunk
 - cooldown `Number`: Cooldown in milliseconds to not reuse accounts - Currently set to 8 hours
@@ -81,19 +81,22 @@ Simply run it via `node databaseManager.js`, use the arrow keys & enter to navig
 You can choose between two botting methods, `LOGIN` and `SERVER`.
 
 - `LOGIN` will log into the targets account and automatically grab a server. `account` object **must** be filled with account details. Will ignore `target` & `serverID`.
-- `SERVER` will assume the target is on the defined server - [Read More](#server-id)
+- `SERVER` will assume the target is on the defined server - [Read More](#server-id-&-match-id)
 
-# Server ID
-The `serverID` field allows for either ServerIP, ServerID or `auto`. Make sure that the server has enough space for your bots. Full servers will not work.
+# Server ID & Match ID
+**Using `auto` __requires__ a fetcher account to be used**
 
-- Server IP is self explanatory.
-- ServerID can be found by entering `status` into the console ingame.
-- - On a community server it will look like this: `1.37.0.1/13701 934/7508 secure  [A:1:1297634312:12708]` > `[A:1:1297634312:12708]`.
-- - On a Valve server it will look like this: `Connected to =[A:1:3849827331:12657]:0` > `[A:1:3849827331:12657]`.
-- - *Make sure to **only** include the stuff between the brackets and the brackets themselves.*
-- `auto` will automatically try and find the correct server the target is on. This works for Casual, Deathmatch or War Games on official Valve servers (Requires `cl_join_advertise` to be `1` or higher) and on any community servers (Requires `cl_join_advertise` to be `2` or higher)
-  - **Using `auto` requires you to use a `fetcher` account in your config**
-  - Certain privacy settings may interfer with this, before reporting an issue make sure everything is set to public in your [Steam Privacy Settings](https://steamcommunity.com/my/edit/settings)
+- The `serverID` field allows for either ServerIP, ServerID or `auto`.
+  - Server IP is self explanatory
+  - ServerID can be found by entering `status` into the console ingame.
+    - On a community server it will look like this: `1.37.0.1/13701 934/7508 secure  [A:1:1297634312:12708]` > `[A:1:1297634312:12708]`.
+    - On a Valve server it will look like this: `Connected to =[A:1:3849827331:12657]:0` > `[A:1:3849827331:12657]`.
+    - *Make sure to **only** include the stuff between the brackets and the brackets themselves.*
+  - `auto` will work on any server, community server **require** the target to use `cl_join_advertise` to be `2` or higher
+    - Certain privacy settings may interfer with this, before reporting an issue make sure everything is set to public in your [Steam Privacy Settings](https://steamcommunity.com/my/edit/settings)
+- The `matchID` field allows for either MatchID or `auto`. 
+  - MatchID can be found at the start of a match before the accept match popup comes up `match_id=3243320471183730331` > `3243320471183730331`
+  - `auto` will automatically find the match ID for you
 
 # Report Botting
 You can choose between two types, `COMMEND` and `REPORT`.
