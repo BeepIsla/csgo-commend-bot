@@ -11,8 +11,6 @@ Without proxies you are limited to ~20 commends per 5 minutes. [Read more about 
 # Future
 - Add the ability to remove commends
 - Add the ability to commend three times with one account per 24 hours instead of once every 8 hours
-- Add the ability for `serverID: "auto"` to be able to get the server ID of Valve servers
-  - I used to know a way to do this but it seems to no longer work
 
 # Requirements
 - [NodeJS **v12**](https://nodejs.org/dist/v12.9.1/) - You will likely need `node-v12.9.1-x64.msi`
