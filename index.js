@@ -257,8 +257,8 @@ console.log = (color, ...args) => {
 		}
 
 		if (config.serverID.toUpperCase() === "AUTO" || config.matchID.toUpperCase() === "AUTO") {
-			matchID = config.matchID === "auto" ? null : config.matchID;
-			let serverID = config.serverID === "auto" ? null : config.serverID;
+			matchID = config.matchID.toUpperCase() === "AUTO" ? null : config.matchID;
+			let serverID = config.serverID.toUpperCase() === "AUTO" ? null : config.serverID;
 
 			console.log("blue", "Logging into fetcher account...");
 			let fetcher = new Account(config.fetcher.askSteamGuard);
