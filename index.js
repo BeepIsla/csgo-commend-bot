@@ -257,6 +257,9 @@ console.log = (color, ...args) => {
 		}
 
 		if (config.serverID.toUpperCase() === "AUTO" || config.matchID.toUpperCase() === "AUTO") {
+			matchID = config.matchID === "auto" ? null : config.matchID;
+			let serverID = config.serverID === "auto" ? null : config.serverID;
+
 			console.log("blue", "Logging into fetcher account...");
 			let fetcher = new Account(config.fetcher.askSteamGuard);
 			await fetcher.login(config.fetcher.username, config.fetcher.password, config.fetcher.sharedSecret);
@@ -264,16 +267,26 @@ console.log = (color, ...args) => {
 			console.log("blue", "Trying to fetch target " + config.fetcher.maxTries + " time" + (config.fetcher.maxTries === 1 ? "" : "s") + " with a delay of " + config.fetcher.tryDelay + "ms");
 
 			let tries = 0;
-			if (config.serverID.toUpperCase() === "AUTO") {
-				while (!serverToUse) {
-					tries++;
+			while (!serverToUse) {
+				tries++;
 
-					if (tries > config.fetcher.maxTries) {
-						console.log("red", "Failed to find server after " + tries + " tr" + (tries === 1 ? "y" : "ies"));
-						break;
+				if (tries > config.fetcher.maxTries) {
+					console.log("red", "Failed to find server after " + tries + " tr" + (tries === 1 ? "y" : "ies"));
+					break;
+				}
+
+				// Community Server
+				serverToUse = await fetcher.getTargetServer(targetAcc).catch((err) => {
+					if (err.message) {
+						console.log("red", err.message);
+					} else {
+						console.error(err);
 					}
+				});
 
-					serverToUse = await fetcher.getTargetServer(targetAcc).catch((err) => {
+				if (!serverToUse) {
+					// Valve Server
+					serverToUse = await fetcher.getTargetServerValve(targetAcc).catch((err) => {
 						if (err.message) {
 							console.log("red", err.message);
 						} else {
@@ -282,59 +295,22 @@ console.log = (color, ...args) => {
 					});
 
 					if (!serverToUse) {
-						/*serverToUse = await fetcher.getTargetServerValve(targetAcc).catch((err) => {
-							if (err.message) {
-								console.log("red", err.message);
-							} else {
-								console.error(err);
-							}
-						});*/
-
 						await new Promise(p => setTimeout(p, config.fetcher.tryDelay));
 					}
 				}
-
-				if (!serverToUse) {
-					await db.close();
-					return;
-				}
-
-				console.log("green", "Found target on " + (serverToUse.isValve ? "Valve" : "Community") + " server " + serverToUse.serverID + " after " + tries + " tr" + (tries === 1 ? "y" : "ies") + " " + (serverToUse.isValve ? "" : ("(" + serverToUse.serverIP + ")")));
-				serverToUse = serverToUse.serverID;
 			}
 
-			tries = 0;
-			let matchIDFind = null;
-			if (config.matchID.toUpperCase() === "AUTO") {
-				while (!matchIDFind) {
-					tries++;
-
-					if (tries > config.fetcher.maxTries) {
-						console.log("red", "Failed to find server after " + tries + " tr" + (tries === 1 ? "y" : "ies"));
-						break;
-					}
-
-					matchIDFind = await fetcher.getTargetServerValve(targetAcc).catch((err) => {
-						if (err.message) {
-							console.log("red", err.message);
-						} else {
-							console.error(err);
-						}
-					});
-
-					if (!matchIDFind) {
-						await new Promise(p => setTimeout(p, config.fetcher.tryDelay));
-					}
-				}
-
-				if (!matchIDFind) {
-					await db.close();
-					return;
-				}
-
-				matchID = matchIDFind.matchID || matchID;
-				console.log("green", "Found target on match " + matchID);
+			if (!serverToUse) {
+				await db.close();
+				return;
 			}
+
+			serverID = serverID === null ? (serverToUse.serverID || "0") : serverID;
+			matchID = matchID === null ? (serverToUse.matchID || "0") : matchID;
+
+			console.log("green", "Found target on " + (serverToUse.isValve ? "Valve" : "Community") + " server " + serverID + " after " + tries + " tr" + (tries === 1 ? "y" : "ies") + " " + (matchID === "0" ? "" : ("(" + matchID + ")")));
+
+			serverToUse = serverID;
 
 			fetcher.logOff();
 		}
@@ -508,7 +484,7 @@ function handleChunk(chunk, toCommend, serverSteamID, matchID) {
 					await db.run("UPDATE accounts SET operational = 0 WHERE \"username\" = \"" + msg.username + "\"");
 				} else {
 					// Add more possible errors which occur if proxies are not working correctly
-					if (((typeof msg.error.message === "string" && /^HTTP CONNECT \d+.*$/i.test(msg.error.message)) || [ "Failed to log in within given 60000ms", "Proxy connection timed out" ].includes(msg.error.message) || [ "ETIMEDOUT"].includes(msg.error.code)) && config.proxy.enabled) {
+					if (((typeof msg.error.message === "string" && /^HTTP CONNECT \d+.*$/i.test(msg.error.message)) || ["Failed to log in within given 60000ms", "Proxy connection timed out"].includes(msg.error.message) || ["ETIMEDOUT"].includes(msg.error.code)) && config.proxy.enabled) {
 						console.log("red", "[" + msg.username + "] Failed to login and due to proxy timeout (" + (res.error.length + res.success.length) + "/" + chunk.length + ")", msg.error);
 					} else {
 						console.log("red", "[" + msg.username + "] Failed to login and has been marked as invalid (" + (res.error.length + res.success.length) + "/" + chunk.length + ")", msg.error);

@@ -313,28 +313,27 @@ module.exports = class Account {
 						accountid
 					]
 				},
-				this.csgoUser.Protos.csgo.ECsgoGCMsg.k_EMsgGCCStrike15_v2_WatchInfoUsers,
-				this.csgoUser.Protos.csgo.CMsgGCCStrike15_v2_WatchInfoUsers,
+				this.csgoUser.Protos.csgo.ECsgoGCMsg.k_EMsgGCCStrike15_v2_GCToClientSteamdatagramTicket,
+				this.csgoUser.Protos.csgo.CMsgGCToClientSteamDatagramTicket,
 				20000
 			).then((info) => {
-				if (!info.watchable_match_infos) {
+				if (!info.serialized_ticket) {
 					reject(new Error("Got no CSGO response data"));
 					return;
 				}
 
-				if (!info.watchable_match_infos[0].server_id) {
-					reject(new Error("Got no Valve server ID"));
-					return;
-				}
+				let serverID = info.serialized_ticket.readBigUInt64LE(72);
+				let matchID = info.serialized_ticket.readBigUInt64LE(93);
 
 				resolve({
 					// This used to be the real servers IP and ID but it no longer seems to be
-					serverID: info.watchable_match_infos[0].server_id.toString(),
+					serverID: serverID.toString(),
 					isValve: true,
-					serverIP: Helper.intToString(info.watchable_match_infos[0].server_ip),
-					matchID: info.watchable_match_infos[0].match_id.toString()
+					matchID: matchID.toString()
 				});
-			}).catch(reject);
+			}).catch((err) => {
+				reject(new Error("Failed to receive Valve CSGO Server information"));
+			});
 		});
 	}
 
