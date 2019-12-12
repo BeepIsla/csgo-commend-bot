@@ -346,7 +346,7 @@ module.exports = class Account extends Events {
 				},
 				this.csgoUser.Protos.csgo.ECsgoGCMsg.k_EMsgGCCStrike15_v2_GCToClientSteamdatagramTicket,
 				this.csgoUser.Protos.csgo.CMsgGCToClientSteamDatagramTicket,
-				20000
+				5000
 			).then((info) => {
 				if (!info.serialized_ticket) {
 					reject(new Error("Got no CSGO response data"));
