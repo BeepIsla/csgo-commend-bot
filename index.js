@@ -7,7 +7,7 @@ const URL = require("url");
 const Target = require("./helpers/Target.js");
 const Helper = require("./helpers/Helper.js");
 const Account = require("./helpers/account.js");
-const config = require("./config.json");
+let config = null;
 
 process.on("unhandledRejection", console.error);
 process.on("uncaughtException", console.error);
@@ -23,13 +23,8 @@ const colors = {
 	cyan: "\x1b[36m",
 	white: "\x1b[37m"
 };
-const helper = new Helper(config.steamWebAPIKey);
+let helper = null;
 let totalNeeded = 0;
-if (config.type && config.type.toUpperCase() === "REPORT") {
-	totalNeeded = Math.max(config.report.aimbot, config.report.wallhack, config.report.speedhack, config.report.teamharm, config.report.textabuse, config.report.voiceabuse);
-} else {
-	totalNeeded = Math.max(config.commend.friendly, config.commend.teaching, config.commend.leader);
-}
 let proxies = undefined;
 let db = undefined;
 let isNewVersion = false;
@@ -43,6 +38,37 @@ console.log = (color, ...args) => {
 }
 
 (async () => {
+	if (!fs.existsSync("./config.json")) {
+		console.log("red", "Failed to find \"config.json\". Did you rename the file to \"config.json.json\"? Make sure to Enable Windows File Extensions");
+		return;
+	}
+
+	try {
+		config = require("./config.json");
+	} catch (err) {
+		let errPosition = err.message.split(": ").pop().trim();
+		let match = errPosition.match(/^Unexpected (?<type>.*) in JSON at position (?<position>.*)$/i);
+		if (!match || isNaN(parseInt(match.groups.position))) {
+			console.error(err);
+		} else {
+			let configRaw = fs.readFileSync("./config.json").toString();
+			let part = configRaw.slice(0, parseInt(match.groups.position));
+			let lines = part.split("\n").map(l => l.trim()).filter(l => l.length > 0);
+
+			console.log("red", "Failed to parse \"config.json\":\nError description: " + errPosition + "\nError on line: " + lines.length + "\nText which caused the error: " + lines.pop());
+			console.log("red", "Please verify your \"config.json\" and take the \"config.json.example\" file for help")
+		}
+		return;
+	}
+
+	helper = new Helper(config.steamWebAPIKey);
+
+	if (config.type && config.type.toUpperCase() === "REPORT") {
+		totalNeeded = Math.max(config.report.aimbot, config.report.wallhack, config.report.speedhack, config.report.teamharm, config.report.textabuse, config.report.voiceabuse);
+	} else {
+		totalNeeded = Math.max(config.commend.friendly, config.commend.teaching, config.commend.leader);
+	}
+
 	if (typeof config.type === "undefined") {
 		config.type = "COMMEND";
 	}
