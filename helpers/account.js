@@ -309,12 +309,12 @@ module.exports = class Account extends Events {
 					5000
 				).then((data) => {
 					if (data.errormsg) {
-						reject(new Error("Received join error: " + data.errormsg));
+						reject(new Error("Received join error for community server: " + data.errormsg));
 						return;
 					}
 
 					if (!data.res || !data.res.serverid) {
-						reject(new Error("Failed to get server join data"));
+						reject(new Error("Failed to get community server join data"));
 						return;
 					}
 
@@ -349,7 +349,7 @@ module.exports = class Account extends Events {
 				5000
 			).then((info) => {
 				if (!info.serialized_ticket) {
-					reject(new Error("Got no CSGO response data"));
+					reject(new Error("Got no CSGO response data for Valve Server"));
 					return;
 				}
 
