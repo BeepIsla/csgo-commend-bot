@@ -87,13 +87,14 @@ process.on("message", async (msg) => {
 			});
 		}
 
-		// The process should automatically exit once all bots have disconnected from Steam but it doesn't
 		while (done < chunk.length) {
 			await new Promise(p => setTimeout(p, 500));
 		}
 
-		await new Promise(p => setTimeout(p, 5000));
-		process.exit(0);
+		// The process should automatically exit once all bots have disconnected from Steam but it doesn't
+		setTimeout(() => {
+			process.exit(0);
+		}, 5000).unref();
 	} catch (err) {
 		process.send({
 			type: "error",
@@ -101,7 +102,8 @@ process.on("message", async (msg) => {
 			error: serializeError(err)
 		});
 
-		await new Promise(p => setTimeout(p, 5000));
-		process.exit(0);
+		setTimeout(() => {
+			process.exit(0);
+		}, 5000).unref();
 	}
 });
