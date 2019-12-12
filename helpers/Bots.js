@@ -35,6 +35,17 @@ process.on("message", async (msg) => {
 
 			const a = new Account(false, acc.proxy, debug);
 
+			a.on("error", (err) => {
+				process.send({
+					type: "halfwayError",
+					username: a.username,
+					error: serializeError(err)
+				});
+
+				done += 1;
+				a.logOff();
+			});
+
 			a.login(acc.username, acc.password, acc.sharedSecret).then(async (hello) => {
 				process.send({
 					type: "loggedOn",
@@ -55,6 +66,8 @@ process.on("message", async (msg) => {
 							username: a.username,
 							error: serializeError(err)
 						});
+					}).finally(() => {
+						a.removeAllListeners("error");
 					});
 				} else {
 					await a.reportPlayer(serverSteamID, target, matchID, acc.report.rpt_aimbot, acc.report.rpt_wallhack, acc.report.rpt_speedhack, acc.report.rpt_teamharm, acc.report.rpt_textabuse, acc.report.rpt_voiceabuse).then((response) => {
@@ -70,12 +83,16 @@ process.on("message", async (msg) => {
 							username: a.username,
 							error: serializeError(err)
 						});
+					}).finally(() => {
+						a.removeAllListeners("error");
 					});
 				}
 
 				a.logOff();
 				done += 1;
 			}).catch((err) => {
+				a.removeAllListeners("error");
+
 				process.send({
 					type: "failLogin",
 					username: a.username,

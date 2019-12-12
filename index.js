@@ -486,6 +486,12 @@ function handleChunk(chunk, toCommend, serverSteamID, matchID) {
 				return;
 			}
 
+			if (msg.type === "halfwayError") {
+				console.log("red", "[" + msg.username + "] Fatal error after logging in and has been marked as invalid (" + (res.error.length + res.success.length) + "/" + chunk.length + ")", msg.error);
+				await db.run("UPDATE accounts SET operational = 0 WHERE \"username\" = \"" + msg.username + "\"");
+				return;
+			}
+
 			if (msg.type === "failLogin") {
 				res.error.push(msg.error);
 
