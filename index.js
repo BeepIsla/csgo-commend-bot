@@ -208,6 +208,9 @@ console.log = (color, ...args) => {
 		}
 
 		await db.close();
+
+		// Force exit the process if it doesn't happen automatically within 15 seconds
+		setTimeout(process.exit, 15000, 1).unref();
 		return;
 	}
 
@@ -276,6 +279,9 @@ console.log = (color, ...args) => {
 				}
 
 				await db.close();
+
+				// Force exit the process if it doesn't happen automatically within 15 seconds
+				setTimeout(process.exit, 15000, 1).unref();
 				return;
 			}
 
@@ -328,6 +334,9 @@ console.log = (color, ...args) => {
 
 			if (!serverToUse) {
 				await db.close();
+
+				// Force exit the process if it doesn't happen automatically within 15 seconds
+				setTimeout(process.exit, 15000, 1).unref();
 				return;
 			}
 
@@ -351,6 +360,9 @@ console.log = (color, ...args) => {
 		}
 
 		await db.close();
+
+		// Force exit the process if it doesn't happen automatically within 15 seconds
+		setTimeout(process.exit, 15000, 1).unref();
 		return;
 	}
 
