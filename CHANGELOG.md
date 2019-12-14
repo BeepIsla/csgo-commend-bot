@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.4.3
+- Improve error logging
+- Handle errors which do not happen during login
+- Reduce Valve server ID timeout
+- Fix process not exiting in some situation
+
 ## 2.4.2
 - Added Valve server ID fetcher - Thanks [@ZOODEN](http://github.com/ZOODEN)
   - [Read More](./README.md#server-id-&-match-id)
