@@ -23,6 +23,9 @@ module.exports = class Account extends Events {
 	}
 
 	_steamErrorHandler(err) {
+		if (this.errored) {
+			return;
+		}
 		this.errored = true;
 
 		this.emit("error", err);
