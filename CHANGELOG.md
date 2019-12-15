@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.4.4
+- Fix a maximum call stack size exceeded error
+- Ensure match ID is always valid
+
 ## 2.4.3
 - Improve error logging
 - Handle errors which do not happen during login
