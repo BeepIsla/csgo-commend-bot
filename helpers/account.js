@@ -166,6 +166,14 @@ module.exports = class Account extends Events {
 				return;
 			}
 
+			if (typeof matchID === "number") {
+				matchID = String(matchID);
+			}
+
+			if (typeof matchID === "string" && (matchID.toUpperCase() === "AUTO" || matchID.length <= 0 || !/^\d+$/.test(matchID))) {
+				matchID = "0";
+			}
+
 			this.csgoUser.sendMessage(
 				730,
 				this.csgoUser.Protos.csgo.ECsgoGCMsg.k_EMsgGCCStrike15_v2_ClientCommendPlayer,
