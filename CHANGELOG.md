@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.4.5
+- Added advanced config error logging to database manager
+- Proxies now wrap around (Allowing for 40 commends per 5 minutes with 2 proxies for example)
+- Fixed a typo
+
 ## 2.4.4
 - Fix a maximum call stack size exceeded error
 - Ensure match ID is always valid
