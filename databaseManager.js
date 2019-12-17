@@ -3,11 +3,35 @@ const sqlite = require("sqlite");
 const path = require("path");
 const fs = require("fs");
 const Helper = require("./helpers/Helper.js");
-const config = require("./config.json");
-
-const helper = new Helper(config.steamWebAPIKey);
+let config = null;
+let helper = null;
 
 (async () => {
+	if (!fs.existsSync("./config.json")) {
+		console.log("Failed to find \"config.json\". Did you rename the file to \"config.json.json\"? Make sure to Enable Windows File Extensions");
+		return;
+	}
+
+	try {
+		config = require("./config.json");
+	} catch (err) {
+		let errPosition = err.message.split(": ").pop().trim();
+		let match = errPosition.match(/^Unexpected (?<type>.*) in JSON at position (?<position>.*)$/i);
+		if (!match || isNaN(parseInt(match.groups.position))) {
+			console.error(err);
+		} else {
+			let configRaw = fs.readFileSync("./config.json").toString();
+			let part = configRaw.slice(0, parseInt(match.groups.position));
+			let lines = part.split("\n").map(l => l.trim()).filter(l => l.length > 0);
+
+			console.log("Failed to parse \"config.json\":\nError description: " + errPosition + "\nError on line: " + lines.length + "\nText which caused the error: " + lines.pop());
+			console.log("Please verify your \"config.json\" and take the \"config.json.example\" file for help")
+		}
+		return;
+	}
+
+	helper = new Helper(config.steamWebAPIKey);
+
 	console.log("Opening database...");
 	let db = await sqlite.open("./accounts.sqlite");
 
