@@ -223,6 +223,10 @@ console.log = (color, ...args) => {
 
 			if (i > 0 && (i % config.proxy.switchProxyEveryXaccounts) === 0 && config.proxy && config.proxy.enabled) {
 				proxySwitch++;
+
+				if (proxySwitch >= proxies.length) {
+					proxySwitch = 0;
+				}
 			}
 
 			accountsToUse[i].proxy = proxies[proxySwitch];
