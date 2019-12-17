@@ -256,7 +256,7 @@ let helper = null;
 			}
 
 			case "Exit": {
-				console.log("Safely losing database...");
+				console.log("Safely closing database...");
 				await db.close();
 				return;
 			}
