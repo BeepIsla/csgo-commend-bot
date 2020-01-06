@@ -7,7 +7,7 @@ Allows you to send commends and reports for CSGO, though commend botting is the 
 
 **Please read the README in its entirety before coming to me asking for help.**
 
-[Frequently Asked Questions](#faq)
+**[Frequently Asked Questions](#frequently-asked-qQuestions)**
 
 ---
 
@@ -140,7 +140,7 @@ Plain text example:
 127.0.0.2:67890
 ```
 
-# FAQ
+# Frequently Asked Questions
 
 - Can I get banned for using this?
   - Who knows, maybe, maybe not. Its unlikely but you never know. Valve usually *at most* disables the bot accounts.
