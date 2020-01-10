@@ -519,7 +519,8 @@ function handleChunk(chunk, toCommend, serverSteamID, matchID) {
 					SteamUser.EResult.AccountNotFound,
 					SteamUser.EResult.Suspended,
 					SteamUser.EResult.AccountLockedDown,
-					SteamUser.EResult.IPBanned
+					SteamUser.EResult.IPBanned,
+					SteamUser.EResult.AccountDisabled
 				];
 
 				if (typeof msg.error.eresult === "number" && !ignoreCodes.includes(msg.error.eresult)) {
