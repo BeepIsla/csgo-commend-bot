@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.4.6
+- Fixed `Account Disabled` error code not marking account as invalid
+
 ## 2.4.5
 - Added advanced config error logging to database manager
 - Proxies now wrap around (Allowing for 40 commends per 5 minutes with 2 proxies for example)
