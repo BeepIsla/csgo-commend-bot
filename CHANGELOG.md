@@ -38,14 +38,14 @@
   - Only works on Valve Matchmaking servers
 
 ## 2.2.6
-- Fix process being stuck on some occasions ([#147](https://github.com/BeepFelix/csgo-commend-bot/issues/147))
+- Fix process being stuck on some occasions ([#147](https://github.com/BeepIsla/csgo-commend-bot/issues/147))
 
 ## 2.2.5
 - Fixed error logging
 
 ## 2.2.4
-- Do not allow full servers to be used ([#76](https://github.com/BeepFelix/csgo-commend-bot/issues/76))
-- Error on VAC banned accounts ([#100](https://github.com/BeepFelix/csgo-commend-bot/issues/100))
+- Do not allow full servers to be used ([#76](https://github.com/BeepIsla/csgo-commend-bot/issues/76))
+- Error on VAC banned accounts ([#100](https://github.com/BeepIsla/csgo-commend-bot/issues/100))
 
 ## 2.2.3
 - Handle response code 2 (Already commended)

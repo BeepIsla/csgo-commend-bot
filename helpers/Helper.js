@@ -94,7 +94,7 @@ module.exports = class Helper {
 
 	GetLatestVersion() {
 		return new Promise(async (resolve, reject) => {
-			let json = await this.GetJSON("https://raw.githubusercontent.com/BeepFelix/csgo-commend-bot/master/package.json");
+			let json = await this.GetJSON("https://raw.githubusercontent.com/BeepIsla/csgo-commend-bot/master/package.json");
 
 			if (!json.version) {
 				reject(json);
