@@ -24,7 +24,7 @@
 
 ## 2.4.2
 - Added Valve server ID fetcher - Thanks [@ZOODEN](http://github.com/ZOODEN)
-  - [Read More](./README.md#server-id-&-match-id)
+  - [Read More](./README.md#server-id--match-id)
 
 ## 2.4.1
 - Fix report bot
