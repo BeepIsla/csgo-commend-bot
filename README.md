@@ -7,7 +7,7 @@ Allows you to send commends and reports for CSGO, though commend botting is the 
 
 **Please read the README in its entirety before coming to me asking for help.**
 
-**[Frequently Asked Questions](#frequently-asked-qQuestions)**
+**[Frequently Asked Questions](#frequently-asked-questions)**
 
 ---
 
