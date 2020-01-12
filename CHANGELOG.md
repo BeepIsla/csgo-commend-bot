@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.4.7
+- Added option to skip update checks
+  - Set `disableUpdateCheck` to `true` in your config to skip update checks
+
 ## 2.4.6
 - Fixed `Account Disabled` error code not marking account as invalid
 
