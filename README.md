@@ -71,6 +71,7 @@ Explanation of each value:
 - betweenChunks `Number`: Delay in milliseconds between chunks
 - cooldown `Number`: Cooldown in milliseconds to not reuse accounts
 - steamWebAPIKey `String`: Steam Web API key from [here](https://steamcommunity.com/dev/apikey)
+- disableUpdateCheck `Boolean`: Whether or not to skip update checks
 
 # Database Manager
 - `Export account list`: Export all accounts in a `username:password` format

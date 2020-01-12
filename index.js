@@ -88,36 +88,40 @@ console.log = (color, ...args) => {
 		return;
 	}
 
-	console.log("white", "Checking for new update...");
-	try {
-		let package = require("./package.json");
+	if (!config.disableUpdateCheck) {
+		console.log("white", "Checking for new update...");
+		try {
+			let package = require("./package.json");
 
-		if (!fs.existsSync("./data/dev")) {
-			if (fs.existsSync("./data/version")) {
-				let version = fs.readFileSync("./data/version").toString();
-				isNewVersion = version !== package.version;
+			if (!fs.existsSync("./data/dev")) {
+				if (fs.existsSync("./data/version")) {
+					let version = fs.readFileSync("./data/version").toString();
+					isNewVersion = version !== package.version;
+				}
+
+				if (!fs.existsSync("./data")) {
+					fs.mkdirSync("./data");
+				}
+				fs.writeFileSync("./data/version", package.version);
 			}
 
-			if (!fs.existsSync("./data")) {
-				fs.mkdirSync("./data");
+			let res = await helper.GetLatestVersion().catch(console.error);
+
+			if (package.version !== res) {
+				let repoURL = package.repository.url.split(".");
+				repoURL.pop();
+				console.log("red", "\nA new version is available on Github @ " + repoURL.join("."));
+				console.log("red", "Downloading is optional but recommended. Make sure to check if there are any new values to be added in your old \"config.json\"");
+				await new Promise(p => setTimeout(p, 5000));
+			} else {
+				console.log("green", "Up to date!");
 			}
-			fs.writeFileSync("./data/version", package.version);
+		} catch (err) {
+			console.error(err);
+			console.log("red", "Failed to check for updates");
 		}
-
-		let res = await helper.GetLatestVersion().catch(console.error);
-
-		if (package.version !== res) {
-			let repoURL = package.repository.url.split(".");
-			repoURL.pop();
-			console.log("red", "\nA new version is available on Github @ " + repoURL.join("."));
-			console.log("red", "Downloading is optional but recommended. Make sure to check if there are any new values to be added in your old \"config.json\"");
-			await new Promise(p => setTimeout(p, 5000));
-		} else {
-			console.log("green", "Up to date!");
-		}
-	} catch (err) {
-		console.error(err);
-		console.log("red", "Failed to check for updates");
+	} else {
+		console.log("white", "Update check skipped");
 	}
 
 	console.log("white", "Checking protobufs...");
