@@ -18,8 +18,8 @@
 		"sharedSecret": ""
 	},
 	"fetcher": {
-		"username": "PrimeAccount",
-		"password": "PrimePassword",
+		"username": "Account",
+		"password": "Password",
 		"sharedSecret": "",
 		"maxTries": 10,
 		"tryDelay": 2500,
