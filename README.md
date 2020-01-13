@@ -146,6 +146,9 @@ Plain text example:
 - Can I get banned for using this?
   - Who knows, maybe, maybe not. Its unlikely but you never know. Valve usually *at most* disables the bot accounts.
 
+- I get an error when trying `npm install`
+  - As said in the README, make sure to install [**NodeJS version 12**](https://nodejs.org/dist/v12.9.1/). On Windows you will need to download the `node-v12.9.1-x64.msi`.
+
 - How many commends can I send?
   - One IP can do ~20 commends per 5 minutes
     - There don't seem to be any other way to increase this, I tried modifying several things and nothing ever worked
