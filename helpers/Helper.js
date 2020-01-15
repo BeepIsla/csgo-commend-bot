@@ -13,20 +13,34 @@ module.exports = class Helper {
 
 	downloadProtobufs(dir) {
 		return new Promise(async (resolve, reject) => {
+			let deletes = ["Protobufs-master", "protobufs"];
+			await Promise.all(deletes.map(d => {
+				let p = path.join(dir, d);
+				if (fs.existsSync(p)) {
+					return this.deleteRecursive();
+				} else {
+					return new Promise(r => r());
+				}
+			}));
+
 			let newProDir = path.join(dir, "Protobufs-master");
-			if (fs.existsSync(newProDir)) {
-				await this.deleteRecursive(newProDir);
-			}
+			let proDir = path.join(dir, "protobufs");
 
 			// Yes I know the ones I download here are technically not the same as the ones in the submodule
 			// but that doesn't really matter, I doubt Valve will do any major changes with the protobufs I use here anyways
-			let r = request("https://github.com/SteamDatabase/Protobufs/archive/master.zip");
-			let pipe = r.pipe(unzipper.Extract({ path: dir }));
-			pipe.on("close", async () => {
-				let proDir = path.join(dir, "protobufs");
-				if (fs.existsSync(proDir)) {
-					await this.deleteRecursive(proDir);
+			request({
+				uri: "https://github.com/SteamDatabase/Protobufs/archive/master.zip",
+				encoding: null
+			}, async (err, res, body) => {
+				if (err) {
+					reject(err);
+					return;
 				}
+
+				let zip = await unzipper.Open.buffer(body);
+				await zip.extract({
+					path: dir
+				});
 
 				fs.rename(newProDir, proDir, (err) => {
 					if (err) {
@@ -37,7 +51,6 @@ module.exports = class Helper {
 					resolve();
 				});
 			});
-			pipe.on("error", reject);
 		});
 	}
 
