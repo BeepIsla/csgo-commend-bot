@@ -1,5 +1,14 @@
 # Changelog
 
+## 2.5.0
+- Fix automatic protobuf downloading not working
+- Lower RAM usage for each worker process
+  - Should also increase speed a little bit
+  - Protobufs are now compiled once per worker instead of once per account
+- Potentially fix issue with `LOGIN` method - [#206](https://github.com/BeepIsla/csgo-commend-bot/issues/206)
+- Add second method for checking for a VAC ban
+- Mark game banned accounts as invalid
+
 ## 2.4.7
 - Added option to skip update checks
   - Set `disableUpdateCheck` to `true` in your config to skip update checks
