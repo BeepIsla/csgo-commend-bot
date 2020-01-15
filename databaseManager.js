@@ -47,7 +47,7 @@ let helper = null;
 			type: "list",
 			name: "response",
 			message: "What would you like to do?",
-			pageSize: 10,
+			pageSize: 11,
 			choices: [
 				"Export account list",
 				"List commends for user",
@@ -57,12 +57,29 @@ let helper = null;
 				"List not working accounts",
 				"Remove all not working accounts",
 				"Get last commend target and time",
+				"Set account operational",
 				"Reset Database",
 				"Exit"
 			]
 		});
 
 		switch (r.response) {
+			case "Set account operational": {
+				let input = await inquirer.prompt({
+					type: "input",
+					name: "username",
+					message: "Enter username you want to set as operational"
+				});
+
+				let data = await db.run("UPDATE accounts SET operational = 1 WHERE username = \"" + input.username + "\"").catch(() => { });
+				if (data.changes <= 0) {
+					console.log("Failed to set operational status of \"" + input.username + "\" to True - Username not found.");
+				} else {
+					console.log("Successfully set operational status of \"" + input.username + "\" to True");
+				}
+				break;
+			}
+
 			case "Get last commend target and time": {
 				let lastCommend = await db.get("SELECT username,lastCommend FROM accounts ORDER BY lastCommend DESC LIMIT 1");
 				console.log("The latest commend has been sent by account " + lastCommend.username + " at " + new Date(lastCommend.lastCommend).toLocaleString());
