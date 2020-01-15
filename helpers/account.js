@@ -20,6 +20,7 @@ module.exports = class Account extends Events {
 		this.loginTimeout = null;
 		this.isTarget = isTarget;
 		this.errored = false;
+		this.gamesPlayedInterval = null;
 	}
 
 	_steamErrorHandler(err) {
@@ -137,6 +138,27 @@ module.exports = class Account extends Events {
 	setGamesPlayed(serverID) {
 		if (this.errored) {
 			return;
+		}
+
+		if (this.gamesPlayedInterval) {
+			clearInterval(this.gamesPlayedInterval);
+			this.gamesPlayedInterval = null;
+		}
+
+		if (this.isTarget) {
+			this.gamesPlayedInterval = setInterval(() => {
+				if (!this.steamUser || !this.steamUser.steamID) {
+					clearInterval(this.gamesPlayedInterval);
+					this.gamesPlayedInterval = null;
+					return;
+				}
+
+				this.steamUser.gamesPlayed({
+					game_id: 730,
+					steam_id_gs: serverID
+				});
+			}, 5 * 60 * 1000);
+			this.gamesPlayedInterval.unref();
 		}
 
 		this.steamUser.gamesPlayed({
