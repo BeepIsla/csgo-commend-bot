@@ -17,7 +17,7 @@ module.exports = class Helper {
 			await Promise.all(deletes.map(d => {
 				let p = path.join(dir, d);
 				if (fs.existsSync(p)) {
-					return this.deleteRecursive();
+					return this.deleteRecursive(p);
 				} else {
 					return new Promise(r => r());
 				}
