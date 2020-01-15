@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.5.1
+- Added `databaseManager` option to set operational status
+  - Use this if an account has been marked as invalid
+
 ## 2.5.0
 - Fix automatic protobuf downloading not working
 - Lower RAM usage for each worker process
