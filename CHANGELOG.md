@@ -2,7 +2,7 @@
 
 ## 2.5.1
 - Added `databaseManager` option to set operational status
-  - Use this if an account has been marked as invalid
+  - Use this if an account has been marked as invalid without resetting commend history
 
 ## 2.5.0
 - Fix automatic protobuf downloading not working
