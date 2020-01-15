@@ -106,7 +106,42 @@ module.exports = class Account extends Events {
 				this.steamUser.setPersona(SteamUser.EPersonaState.Online);
 				this.steamUser.gamesPlayed(730);
 
-				this.csgoUser.start().then(resolve).catch(reject);
+				this.csgoUser.start().then((gcHello) => {
+					this.csgoUser.sendMessage(
+						730,
+						this.csgoUser.Protos.csgo.ECsgoGCMsg.k_EMsgGCCStrike15_v2_MatchmakingClient2GCHello,
+						{},
+						this.csgoUser.Protos.csgo.CMsgGCCStrike15_v2_MatchmakingClient2GCHello,
+						{},
+						this.csgoUser.Protos.csgo.ECsgoGCMsg.k_EMsgGCCStrike15_v2_MatchmakingGC2ClientHello,
+						this.csgoUser.Protos.csgo.CMsgGCCStrike15_v2_MatchmakingGC2ClientHello,
+						10000
+					).then((mmHello) => {
+						if (typeof mmHello.vac_banned === "number" && mmHello.vac_banned) {
+							this.steamUser.logOff();
+							reject(new Error("VAC Banned"));
+							return;
+						}
+
+						/*
+							8: This account is permanently Untrusted
+							10: Convicted by Overwatch - Majorly Disruptive
+							11: Convicted by Overwatch - Minorly Disruptive
+							14: This account is permanently Untrusted
+							15: Global Cooldown
+							19: A server using your game server login token has been banned. Your account is now permanently banned from operating game servers, and you have a cooldown from connecting to game servers.
+						*/
+						if (typeof mmHello.penalty_reason === "number" && [8, 10, 11, 14, 15, 19].includes(mmHello.penalty_reason)) {
+							this.steamUser.logOff();
+							reject(new Error("Game Banned"));
+							return;
+						}
+
+						resolve(gcHello);
+					}).catch((err) => {
+						reject(new Error("GC connection timeout - MMHello"));
+					});
+				}).catch(reject);
 			};
 
 			let steamGuard = () => {

@@ -86,7 +86,7 @@ module.exports = class GameCoordinator extends Events {
 					this.startPromise = null;
 				}
 
-				reject(new Error("GC connection timeout"));
+				reject(new Error("GC connection timeout - GCHello"));
 			}, timeout);
 
 			this._GCHelloInterval = setInterval(() => {

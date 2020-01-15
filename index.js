@@ -535,6 +535,9 @@ function handleChunk(chunk, toCommend, serverSteamID, matchID) {
 				} else if (msg.error && msg.error.message === "VAC Banned") {
 					console.log("red", "[" + msg.username + "] Has been VAC banned in CSGO and has been marked as invalid (" + (res.error.length + res.success.length) + "/" + chunk.length + ")", msg.error);
 					await db.run("UPDATE accounts SET operational = 0 WHERE \"username\" = \"" + msg.username + "\"");
+				} else if (msg.error && msg.error.message === "Game Banned") {
+					console.log("red", "[" + msg.username + "] Has been Game banned in CSGO and has been marked as invalid (" + (res.error.length + res.success.length) + "/" + chunk.length + ")", msg.error);
+					await db.run("UPDATE accounts SET operational = 0 WHERE \"username\" = \"" + msg.username + "\"");
 				} else {
 					// Add more possible errors which occur if proxies are not working correctly
 					if (((typeof msg.error.message === "string" && /^HTTP CONNECT \d+.*$/i.test(msg.error.message)) || ["Failed to log in within given 60000ms", "Proxy connection timed out"].includes(msg.error.message) || ["ETIMEDOUT"].includes(msg.error.code)) && config.proxy.enabled) {
