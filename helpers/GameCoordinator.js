@@ -3,6 +3,7 @@ const fs = require("fs");
 const path = require("path");
 const ByteBuffer = require("bytebuffer");
 const Protos = require("./Protos.js");
+let compiledProtos = null;
 
 module.exports = class GameCoordinator extends Events {
 	constructor(steamUser, debug = false) {
@@ -22,7 +23,7 @@ module.exports = class GameCoordinator extends Events {
 
 		this.steamUser = steamUser;
 		this.debug = debug;
-		this.Protos = Protos([
+		this.Protos = compiledProtos ? compiledProtos : Protos([
 			{
 				name: "csgo",
 				protos: [
@@ -42,6 +43,8 @@ module.exports = class GameCoordinator extends Events {
 		this._GCHelloInterval = null;
 		this.startPromise = null;
 		this.startTimeout = null;
+
+		compiledProtos = this.Protos;
 
 		steamUser.on("receivedFromGC", (appid, msgType, payload) => {
 			if (appid === 730) {
