@@ -182,7 +182,7 @@ Plain text example:
 
 Lets start by saying: **None of this is confirmed, nobody knows what the truth is so these are just assumptions.**
 
-Aside from [**Valve literally saying they are fixed**](https://www.reddit.com/r/GlobalOffensive/comments/89qk3l/i_emailed_a_valve_employee_about_csgo_and_got_a/dwtqe94/) every match (Competitive, Wingman, Danger Zone, etc) all have a list of account IDs which are allowed to join/participate, so when a report gets sent all Valve has to do is check if the sender and receiver are in the same match or not.
+Aside from [**Valve literally saying they are fixed**](https://www.reddit.com/r/GlobalOffensive/comments/89qk3l/i_emailed_a_valve_employee_about_csgo_and_got_a/dwtqe94/) every match (Competitive, Wingman, Danger Zone, etc) has a list of account IDs which are allowed to join/participate, so when a report gets sent all Valve has to do is check if the sender and receiver are in the same match or not.
 
 Now you could argue why doesn't the same happen when commending or why do they give a fake response? The answer is: Community servers.
 
