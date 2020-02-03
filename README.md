@@ -1,7 +1,7 @@
 # CSGO Commend Bot
 Allows you to send commends and reports for CSGO, though commend botting is the focus of it and reporting is just a little side thing.
 
-*Note: Even though I have implemented a report bot I still believe they are fixed.*
+*Note: Even though I have implemented a report bot I still believe they are fixed. - [**Read More**](#why-i-think-report-bots-are-fixed)*
 
 **Please view the [Changelog](./CHANGELOG.md) for a list of changes.**
 
@@ -177,3 +177,19 @@ Plain text example:
 
 - I found someone who copied this and is selling it/released it without mentioning you.
   -  Good for them, I don't care. I have still made the accomplishment, not them.
+
+# Why I think report bots are fixed
+
+Lets start by saying: **None of this is confirmed, nobody knows what the truth is so these are just assumptions.**
+
+Aside from [**Valve literally saying they are fixed**](https://www.reddit.com/r/GlobalOffensive/comments/89qk3l/i_emailed_a_valve_employee_about_csgo_and_got_a/dwtqe94/) every match (Competitive, Wingman, Danger Zone, etc) all have a list of account IDs which are allowed to join/participate, so when a report gets sent all Valve has to do is check if the sender and receiver are in the same match or not.
+
+Now you could argue why doesn't the same happen when commending or why do they give a fake response? The answer is: Community servers.
+
+Commending must work on community servers so it is not as strict as reporting. Reporting on the other hand is completely irrelevant on community servers, there is no reason why Valve should use them especially considering community servers may give advantages to some players, so reporting simply returns a fake response.
+
+- Is sender and receiver assigned to the same Valve match?
+  - Yes: Real report
+  - No: Is the server ID the same for sender and receiver?
+    - Yes: Send a fake response
+    - No: Do not respond at all
