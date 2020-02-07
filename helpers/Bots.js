@@ -70,7 +70,7 @@ process.on("message", async (msg) => {
 						a.removeAllListeners("error");
 					});
 				} else {
-					await a.reportPlayer(serverSteamID, target, matchID, acc.report.rpt_aimbot, acc.report.rpt_wallhack, acc.report.rpt_speedhack, acc.report.rpt_teamharm, acc.report.rpt_textabuse, acc.report.rpt_voiceabuse).then((response) => {
+					await a.reportPlayer(serverSteamID, target, matchID, acc.report.rpt_aimbot, acc.report.rpt_wallhack, acc.report.rpt_speedhack, acc.report.rpt_teamharm, acc.report.rpt_textabuse).then((response) => {
 						process.send({
 							type: "reported",
 							username: a.username,

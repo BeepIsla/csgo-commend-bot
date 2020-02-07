@@ -64,7 +64,7 @@ console.log = (color, ...args) => {
 	helper = new Helper(config.steamWebAPIKey);
 
 	if (config.type && config.type.toUpperCase() === "REPORT") {
-		totalNeeded = Math.max(config.report.aimbot, config.report.wallhack, config.report.speedhack, config.report.teamharm, config.report.textabuse, config.report.voiceabuse);
+		totalNeeded = Math.max(config.report.aimbot, config.report.wallhack, config.report.speedhack, config.report.teamharm, config.report.abusive);
 	} else {
 		totalNeeded = Math.max(config.commend.friendly, config.commend.teaching, config.commend.leader);
 	}
@@ -239,8 +239,7 @@ console.log = (color, ...args) => {
 				rpt_wallhack: config.report.wallhack > chosen ? true : false,
 				rpt_speedhack: config.report.speedhack > chosen ? true : false,
 				rpt_teamharm: config.report.teamharm > chosen ? true : false,
-				rpt_textabuse: config.report.textabuse > chosen ? true : false,
-				rpt_voiceabuse: config.report.voiceabuse > chosen ? true : false
+				rpt_textabuse: config.report.abusive > chosen ? true : false
 			}
 		}
 	} else {

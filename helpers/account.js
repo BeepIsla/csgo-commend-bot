@@ -262,10 +262,9 @@ module.exports = class Account extends Events {
 	 * @param {Boolean|Number} rpt_speedhack Do we want to report as other hacking?
 	 * @param {Boolean|Number} rpt_teamharm Do we want to report as griefing?
 	 * @param {Boolean|Number} rpt_textabuse Do we want to report as text abusing?
-	 * @param {Boolean|Number} rpt_voiceabuse Do we want to report as voice abusing?
 	 * @returns {Promise.<Object>}
 	 */
-	reportPlayer(serverID, accountID, matchID, rpt_aimbot, rpt_wallhack, rpt_speedhack, rpt_teamharm, rpt_textabuse, rpt_voiceabuse) {
+	reportPlayer(serverID, accountID, matchID, rpt_aimbot, rpt_wallhack, rpt_speedhack, rpt_teamharm, rpt_textabuse) {
 		return new Promise(async (resolve, reject) => {
 			this.setGamesPlayed(serverID);
 
@@ -289,7 +288,7 @@ module.exports = class Account extends Events {
 					rpt_speedhack: rpt_speedhack ? 1 : 0,
 					rpt_teamharm: rpt_teamharm ? 1 : 0,
 					rpt_textabuse: rpt_textabuse ? 1 : 0,
-					rpt_voiceabuse: rpt_voiceabuse ? 1 : 0
+					rpt_voiceabuse: 0
 				},
 				this.csgoUser.Protos.csgo.ECsgoGCMsg.k_EMsgGCCStrike15_v2_ClientReportResponse,
 				this.csgoUser.Protos.csgo.CMsgGCCStrike15_v2_ClientReportResponse,

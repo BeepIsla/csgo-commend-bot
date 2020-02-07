@@ -45,8 +45,7 @@ Explanation of each value:
   - aimbot `Number`: Amount of reports you want to send as aimbotting
   - wallhack `Number`: Amount of reports you want to send as wallhacking
   - speedhack `Number`: Amount of reports you want to send as other hacking
-  - textabuse `Number`: Amount of reports you want to send as text abuse
-  - voiceabuse `Number`: Amount of reports you want to send as voice abuse
+  - abusive `Number`: Amount of reports you want to send as abusive communications or profile
 - account:
   - username `String`: Username of the account you want to boost
   - password `String`: Pasword of the account you want to boost

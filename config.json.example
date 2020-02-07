@@ -9,8 +9,7 @@
 		"wallhack": 10,
 		"speedhack": 10,
 		"teamharm": 10,
-		"textabuse": 10,
-		"voiceabuse": 10
+		"abusive": 10
 	},
 	"account": {
 		"username": "",
