@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.5.3
+- Removed abusive voice reports
+  - Voice and Text abuse is now combined in `abusive` - [Read CSGO's Blog Post for more information](https://blog.counter-strike.net/index.php/2020/02/28450/)
+  - *While its technically still possible to report for voice abuse it is now unused*
+
 ## 2.5.2
 - Fixed automatic protobuf downloader not working
 
