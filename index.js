@@ -380,8 +380,11 @@ console.log = (color, ...args) => {
 			try {
 				let oldServer = serverToUse;
 				while (oldServer === serverToUse || !serverToUse) {
-					let servers = await helper.GetActiveServer();
-					serverToUse = servers[Math.floor(Math.random() * servers.length)].steamid;
+					serverToUse = await helper.GetActiveServer().shift().steamid;
+
+					if (serverToUse === oldServer) {
+						console.log("red", "Old and new server are the same, retrying...");
+					}
 				}
 
 				console.log("white", "Selected available server " + serverToUse);
