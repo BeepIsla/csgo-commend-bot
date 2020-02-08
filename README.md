@@ -69,6 +69,7 @@ Explanation of each value:
 - perChunk `Number`: Will chunk all accounts into groups of `perChunk` size
 - betweenChunks `Number`: Delay in milliseconds between chunks
 - cooldown `Number`: Cooldown in milliseconds to not reuse accounts
+- switchServerAfterChunks `Number`: **When using `LOGIN` method** switch server automatically after this many chunks have been processed
 - steamWebAPIKey `String`: Steam Web API key from [here](https://steamcommunity.com/dev/apikey)
 - disableUpdateCheck `Boolean`: Whether or not to skip update checks
 

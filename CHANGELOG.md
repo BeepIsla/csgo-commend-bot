@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.6.0
+- Added automatic server switcher
+  - **This only works for `LOGIN` method**
+
 ## 2.5.3
 - Removed abusive voice reports
   - Voice and Text abuse is now combined in `abusive` - [Read CSGO's Blog Post for more information](https://blog.counter-strike.net/index.php/2020/02/28450/)
