@@ -37,6 +37,7 @@
 	"perChunk": 20,
 	"betweenChunks": 300000,
 	"cooldown": 28800000,
+	"switchServerAfterChunks": 5,
 	"steamWebAPIKey": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
 	"disableUpdateCheck": false
 }

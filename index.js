@@ -374,6 +374,24 @@ console.log = (color, ...args) => {
 	}
 
 	for (let i = 0; i < chunks.length; i++) {
+		if (i !== 0 && i % (config.switchServerAfterChunks || Number.MAX_SAFE_INTEGER) === 0 && config.method.toUpperCase() === "LOGIN") {
+			console.log("white", "Getting an available server after " + config.switchServerAfterChunks + " chunk" + (config.switchServerAfterChunks === 1 ? "" : "s"));
+
+			try {
+				let oldServer = serverToUse;
+				while (oldServer === serverToUse || !serverToUse) {
+					let servers = await helper.GetActiveServer();
+					serverToUse = servers[Math.floor(Math.random() * servers.length)].steamid;
+				}
+
+				console.log("white", "Selected available server " + serverToUse);
+			} catch {
+				console.log("red", "Failed to fetch new server, continuing with old server " + serverToUse);
+			}
+
+			targetAcc.setGamesPlayed(serverToUse);
+		}
+
 		console.log("white", "Logging in on chunk " + (i + 1) + "/" + chunks.length);
 
 		// Do commends
