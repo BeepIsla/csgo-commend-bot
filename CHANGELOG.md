@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.6.1
+- Fixed commend/report bot
+  - No longer works on Competitive and Wingman
+    - More handling and error messages for this will be added soon
+  - `LOGIN` method might no longer work correctly
+  - Thanks [PixLSteam](https://github.com/PixLSteam) & [Amerrrrr](https://github.com/Amerrrrr)
+- Smaller internal changes
+
 ## 2.6.0
 - Added automatic server switcher
   - **This only works for `LOGIN` method**

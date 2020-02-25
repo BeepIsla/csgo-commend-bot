@@ -1,28 +1,14 @@
 const Events = require("events");
-const fs = require("fs");
-const path = require("path");
 const ByteBuffer = require("bytebuffer");
 const Protos = require("./Protos.js");
-let compiledProtos = null;
+let compiledProtos = undefined;
 
-module.exports = class GameCoordinator extends Events {
-	constructor(steamUser, debug = false) {
+module.exports = class Coordinator extends Events {
+	constructor(steamUser, appID) {
 		super();
 
-		if (debug) {
-			this.debugPath = path.join(__dirname, "..", "debug");
-			if (!fs.existsSync(this.debugPath)) {
-				fs.mkdirSync(this.debugPath);
-			}
-
-			this.debugPath = path.join(this.debugPath, Date.now().toString());
-			if (!fs.existsSync(this.debugPath)) {
-				fs.mkdirSync(this.debugPath);
-			}
-		}
-
+		this.appID = appID;
 		this.steamUser = steamUser;
-		this.debug = debug;
 		this.Protos = compiledProtos ? compiledProtos : Protos([
 			{
 				name: "csgo",
@@ -35,69 +21,29 @@ module.exports = class GameCoordinator extends Events {
 			{
 				name: "steam",
 				protos: [
+					__dirname + "/../protobufs/steam/enums_clientserver.proto",
 					__dirname + "/../protobufs/steam/steammessages_base.proto",
+					__dirname + "/../protobufs/steam/steammessages_clientserver.proto",
 					__dirname + "/../protobufs/steam/steammessages_clientserver_2.proto"
 				]
 			}
 		]);
-		this._GCHelloInterval = null;
-		this.startPromise = null;
-		this.startTimeout = null;
-
 		compiledProtos = this.Protos;
 
 		steamUser.on("receivedFromGC", (appid, msgType, payload) => {
-			if (appid === 730) {
-				if (msgType === this.Protos.csgo.EGCBaseClientMsg.k_EMsgGCClientWelcome) {
-					if (this._GCHelloInterval) {
-						clearInterval(this._GCHelloInterval);
-						this._GCHelloInterval = null;
-					}
-
-					if (this.startPromise) {
-						let msg = this.Protos.csgo.CMsgClientWelcome.decode(payload);
-						msg = this.Protos.csgo.CMsgClientWelcome.toObject(msg, { defaults: true });
-						this.startPromise(msg);
-						this.startPromise = null;
-					}
-
-					if (this.startTimeout) {
-						clearTimeout(this.startTimeout);
-						this.startTimeout = null;
-					}
-				}
-
-				this.emit("message", msgType, payload);
+			if (appid !== this.appID) {
+				return;
 			}
 
-			this.emit("allMsg", appid, msgType, payload);
+			this.emit("receivedFromGC", msgType, payload);
 		});
-	}
 
-	start(timeout = 20000) {
-		return new Promise((resolve, reject) => {
-			this.startTimeout = setTimeout(() => {
-				if (this._GCHelloInterval) {
-					clearInterval(this._GCHelloInterval);
-					this._GCHelloInterval = null;
-				}
+		let _handleMessage = this.steamUser._handleMessage;
+		this.steamUser._handleMessage = (header, body) => {
+			_handleMessage.call(this.steamUser, header, body);
 
-				if (this.startPromise) {
-					this.startPromise = null;
-				}
-
-				reject(new Error("GC connection timeout - GCHello"));
-			}, timeout);
-
-			this._GCHelloInterval = setInterval(() => {
-				let message = this.Protos.csgo.CMsgClientHello.create({});
-				let encoded = this.Protos.csgo.CMsgClientHello.encode(message);
-
-				this.steamUser.sendToGC(730, this.Protos.csgo.EGCBaseClientMsg.k_EMsgGCClientHello, {} , encoded.finish());
-			}, 5000);
-
-			this.startPromise = resolve;
-		});
+			this.emit("receivedFromSteam", header, body);
+		}
 	}
 
 	/**
@@ -121,10 +67,6 @@ module.exports = class GameCoordinator extends Events {
 					encoded = protobuf.encode(message);
 				}
 
-				if (this.debug) {
-					fs.writeFileSync(path.join(this.debugPath, Date.now() + "_out_" + header), protobuf ? encoded.finish() : encoded);
-				}
-
 				this.steamUser._send({
 					msg: header,
 					proto: proto
@@ -135,38 +77,33 @@ module.exports = class GameCoordinator extends Events {
 					return;
 				}
 
-				this.steamUser._handlerManager.add(responseHeader, (body) => {
-					if (this.steamUser._handlerManager.hasHandler(responseHeader)) {
-						if (this.steamUser._handlerManager._handlers[responseHeader] && this.steamUser._handlerManager._handlers[responseHeader].length > 0) {
-							this.steamUser._handlerManager._handlers[responseHeader].pop(); // We added our message last (I assume) so remove the last one
+				let sendTimeout = setTimeout(() => {
+					this.removeListener("receivedFromSteam", sendMessageResponse);
+					reject(new Error("Failed to send message: Timeout"));
+				}, timeout);
 
-							if (this.steamUser._handlerManager._handlers[responseHeader].length <= 0) {
-								delete this.steamUser._handlerManager._handlers[responseHeader];
-							}
-						}
-					}
-
-					if (this.debug) {
-						fs.writeFileSync(path.join(this.debugPath, Date.now() + "_in_" + responseHeader), body.toBuffer ? body.toBuffer() : body);
-					}
-
-					if (!responseProtobuf) {
-						if (body instanceof Buffer || body instanceof ByteBuffer) {
-							resolve(body.toBuffer ? body.toBuffer() : body);
-							return;
-						}
-
-						resolve(body.toBuffer ? body.toBuffer() : body);
+				this.on("receivedFromSteam", sendMessageResponse);
+				function sendMessageResponse(header, payload) {
+					if (header.msg !== responseHeader) {
 						return;
 					}
 
-					if (body instanceof Buffer || body instanceof ByteBuffer) {
-						body = responseProtobuf.decode(body.toBuffer ? body.toBuffer() : body);
-						body = responseProtobuf.toObject(body, { defaults: true });
+					clearTimeout(sendTimeout);
+					this.removeListener("receivedFromSteam", sendMessageResponse);
+
+					if (!responseProtobuf) {
+						resolve(payload);
+						return;
 					}
 
-					resolve(body);
-				});
+					if (payload instanceof Buffer || ByteBuffer.isByteBuffer(payload)) {
+						let msg = responseProtobuf.decode(ByteBuffer.isByteBuffer(payload) ? payload.toBuffer() : payload);
+						msg = responseProtobuf.toObject(msg, { defaults: true });
+						resolve(msg);
+					} else {
+						resolve(payload);
+					}
+				}
 				return;
 			}
 
@@ -177,39 +114,33 @@ module.exports = class GameCoordinator extends Events {
 			}
 			this.steamUser.sendToGC(appid, header, proto, protobuf ? encoded.finish() : encoded);
 
-			if (this.debug) {
-				fs.writeFileSync(path.join(this.debugPath, Date.now() + "_in_5452_" + header), protobuf ? encoded.finish() : encoded);
-			}
-
 			if (!responseHeader) {
 				resolve();
 				return;
 			}
 
 			let sendTimeout = setTimeout(() => {
-				this.removeListener("allMsg", sendMessageResponse);
+				this.removeListener("receivedFromGC", sendMessageResponse);
 				reject(new Error("Failed to send message: Timeout"));
 			}, timeout);
 
-			this.on("allMsg", sendMessageResponse);
-			function sendMessageResponse(appid, msgType, payload) {
-				if (msgType === responseHeader) {
-					clearTimeout(sendTimeout);
-					this.removeListener("allMsg", sendMessageResponse);
-
-					if (this.debug) {
-						fs.writeFileSync(path.join(this.debugPath, Date.now() + "_in_5453_" + responseHeader), payload);
-					}
-
-					if (!responseProtobuf) {
-						resolve(payload);
-						return;
-					}
-
-					let msg = responseProtobuf.decode(payload);
-					msg = responseProtobuf.toObject(msg, { defaults: true });
-					resolve(msg);
+			this.on("receivedFromGC", sendMessageResponse);
+			function sendMessageResponse(msgType, payload) {
+				if (msgType !== responseHeader) {
+					return;
 				}
+
+				clearTimeout(sendTimeout);
+				this.removeListener("receivedFromGC", sendMessageResponse);
+
+				if (!responseProtobuf) {
+					resolve(payload);
+					return;
+				}
+
+				let msg = responseProtobuf.decode(payload);
+				msg = responseProtobuf.toObject(msg, { defaults: true });
+				resolve(msg);
 			}
 		});
 	}

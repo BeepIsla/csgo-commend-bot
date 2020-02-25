@@ -22,7 +22,6 @@ process.on("message", async (msg) => {
 	const isReport = msg.isReport;
 	const isCommend = msg.isCommend;
 	const matchID = msg.matchID;
-	const debug = msg.debug || false;
 
 	try {
 		let done = 0;
@@ -33,7 +32,7 @@ process.on("message", async (msg) => {
 				username: acc.username
 			});
 
-			const a = new Account(false, acc.proxy, debug);
+			const a = new Account(false, acc.proxy);
 
 			a.on("error", (err) => {
 				process.send({
@@ -51,6 +50,27 @@ process.on("message", async (msg) => {
 					type: "loggedOn",
 					username: a.username,
 					hello: hello
+				});
+
+				let auth = await a.authenticate(serverSteamID).catch((err) => {
+					process.send({
+						type: "authError",
+						username: a.username,
+						error: serializeError(err)
+					});
+
+					a.removeAllListeners("error");
+					a.logOff();
+					done += 1;
+				});
+				if (!auth) {
+					return;
+				}
+
+				process.send({
+					type: "auth",
+					username: a.username,
+					crc: auth
 				});
 
 				if (isCommend) {

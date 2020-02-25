@@ -2,12 +2,12 @@ const Events = require("events");
 const SteamUser = require("steam-user");
 const SteamTotp = require("steam-totp");
 const SteamID = require("steamid");
+const StdLib = require("@doctormckay/stdlib");
 const GameCoordinator = require("./GameCoordinator.js");
 const VDF = require("./VDF.js");
-const Helper = require("./Helper.js");
 
 module.exports = class Account extends Events {
-	constructor(isTarget = false, proxy = undefined, debug = false) {
+	constructor(isTarget = false, proxy = undefined) {
 		super();
 
 		this.steamUser = new SteamUser({
@@ -16,7 +16,7 @@ module.exports = class Account extends Events {
 			picsCacheAll: false,
 			httpProxy: proxy
 		});
-		this.csgoUser = new GameCoordinator(this.steamUser, debug);
+		this.csgoUser = new GameCoordinator(this.steamUser, 730);
 		this.loginTimeout = null;
 		this.isTarget = isTarget;
 		this.errored = false;
@@ -106,42 +106,66 @@ module.exports = class Account extends Events {
 				this.steamUser.setPersona(SteamUser.EPersonaState.Online);
 				this.steamUser.gamesPlayed(730);
 
-				this.csgoUser.start().then((gcHello) => {
-					this.csgoUser.sendMessage(
+				let welcome = undefined;
+				let fails = 0;
+				while (!welcome) {
+					welcome = await this.csgoUser.sendMessage(
 						730,
-						this.csgoUser.Protos.csgo.ECsgoGCMsg.k_EMsgGCCStrike15_v2_MatchmakingClient2GCHello,
+						this.csgoUser.Protos.csgo.EGCBaseClientMsg.k_EMsgGCClientHello,
 						{},
-						this.csgoUser.Protos.csgo.CMsgGCCStrike15_v2_MatchmakingClient2GCHello,
+						this.csgoUser.Protos.csgo.CMsgClientHello,
 						{},
-						this.csgoUser.Protos.csgo.ECsgoGCMsg.k_EMsgGCCStrike15_v2_MatchmakingGC2ClientHello,
-						this.csgoUser.Protos.csgo.CMsgGCCStrike15_v2_MatchmakingGC2ClientHello,
-						10000
-					).then((mmHello) => {
-						if (typeof mmHello.vac_banned === "number" && mmHello.vac_banned) {
-							this.steamUser.logOff();
-							reject(new Error("VAC Banned"));
-							return;
+						this.csgoUser.Protos.csgo.EGCBaseClientMsg.k_EMsgGCClientWelcome,
+						this.csgoUser.Protos.csgo.CMsgClientWelcome,
+						5000
+					).catch(() => { });
+
+					if (!welcome) {
+						if (++fails <= 10) {
+							continue;
 						}
 
-						/*
-							8: This account is permanently Untrusted
-							10: Convicted by Overwatch - Majorly Disruptive
-							11: Convicted by Overwatch - Minorly Disruptive
-							14: This account is permanently Untrusted
-							15: Global Cooldown
-							19: A server using your game server login token has been banned. Your account is now permanently banned from operating game servers, and you have a cooldown from connecting to game servers.
-						*/
-						if (typeof mmHello.penalty_reason === "number" && [8, 10, 11, 14, 15, 19].includes(mmHello.penalty_reason)) {
-							this.steamUser.logOff();
-							reject(new Error("Game Banned"));
-							return;
-						}
+						this.steamUser.logOff();
+						reject(new Error("GC connection timeout - Hello"));
+						return;
+					}
+				}
 
-						resolve(gcHello);
-					}).catch((err) => {
-						reject(new Error("GC connection timeout - MMHello"));
-					});
-				}).catch(reject);
+				this.csgoUser.sendMessage(
+					730,
+					this.csgoUser.Protos.csgo.ECsgoGCMsg.k_EMsgGCCStrike15_v2_MatchmakingClient2GCHello,
+					{},
+					this.csgoUser.Protos.csgo.CMsgGCCStrike15_v2_MatchmakingClient2GCHello,
+					{},
+					this.csgoUser.Protos.csgo.ECsgoGCMsg.k_EMsgGCCStrike15_v2_MatchmakingGC2ClientHello,
+					this.csgoUser.Protos.csgo.CMsgGCCStrike15_v2_MatchmakingGC2ClientHello,
+					10000
+				).then((mmHello) => {
+					if (mmHello.vac_banned) {
+						this.steamUser.logOff();
+						reject(new Error("VAC Banned"));
+						return;
+					}
+
+					/*
+						8: This account is permanently Untrusted
+						10: Convicted by Overwatch - Majorly Disruptive
+						11: Convicted by Overwatch - Minorly Disruptive
+						14: This account is permanently Untrusted
+						15: Global Cooldown
+						19: A server using your game server login token has been banned. Your account is now permanently banned from operating game servers, and you have a cooldown from connecting to game servers.
+					*/
+					if ([8, 10, 11, 14, 15, 19].includes(mmHello.penalty_reason)) {
+						this.steamUser.logOff();
+						reject(new Error("Game Banned"));
+						return;
+					}
+
+					resolve(welcome);
+				}).catch((err) => {
+					this.steamUser.logOff();
+					reject(new Error("GC connection timeout - MMHello"));
+				});
 			};
 
 			let steamGuard = () => {
@@ -199,6 +223,80 @@ module.exports = class Account extends Events {
 		this.steamUser.gamesPlayed({
 			game_id: 730,
 			steam_id_gs: serverID
+		});
+	}
+
+	authenticate(serverID) {
+		return new Promise(async (resolve, reject) => {
+			let authTicket = await this.steamUser.getAuthSessionTicket(730).catch(reject);
+			if (!authTicket) {
+				return;
+			}
+
+			let ticketCrc = StdLib.Hashing.crc32(authTicket.appTicket);
+			this.csgoUser.sendMessage(
+				undefined,
+				this.csgoUser.Protos.steam.EMsg.k_EMsgClientAuthList,
+				{},
+				undefined, // this.csgoUser.Protos.steam.CMsgClientAuthList - (Steam-User automatically encodes this for us)
+							// TODO: Change sendMessage() to make this more consistent
+				{
+					tokens_left: this.steamUser._gcTokens.length,
+					last_request_seq: this.steamUser._authSeqMe,
+					last_request_seq_from_server: this.steamUser._authSeqThem,
+					tickets: [
+						{
+							estate: 2,
+							eresult: 0,
+							steamid: serverID,
+							gameid: 730,
+							h_steam_pipe: this.steamUser._hSteamPipe,
+							ticket_crc: ticketCrc,
+							ticket: authTicket.appTicket
+						}
+					],
+					app_ids: [730],
+					message_sequence: ++this.steamUser._authSeqMe
+				},
+				this.csgoUser.Protos.steam.EMsg.k_EMsgClientAuthListAck,
+				this.csgoUser.Protos.steam.CMsgClientAuthListAck,
+				5000
+			).then((ticketRes) => {
+				if (!ticketRes.ticket_crc || ticketRes.ticket_crc.length <= 0 || ticketRes.ticket_crc[0] !== ticketCrc) {
+					reject(new Error("Received authlist for ticket " + ticketRes.ticket_crc[0] + " but expected " + ticketCrc));
+					return;
+				}
+
+				resolve(ticketCrc);
+			}).catch(reject);
+		});
+	}
+
+	unauthenticate() {
+		return new Promise(async (resolve, reject) => {
+			this.csgoUser.sendMessage(
+				undefined,
+				this.csgoUser.Protos.steam.EMsg.k_EMsgClientAuthList,
+				{},
+				undefined, //this.csgoUser.Protos.steam.CMsgClientAuthList,
+				{
+					tokens_left: this.steamUser._gcTokens.length,
+					last_request_seq: this.steamUser._authSeqMe,
+					last_request_seq_from_server: this.steamUser._authSeqThem,
+					app_ids: [730],
+					message_sequence: ++this.steamUser._authSeqMe
+				},
+				this.csgoUser.Protos.steam.EMsg.k_EMsgClientAuthListAck,
+				this.csgoUser.Protos.steam.CMsgClientAuthListAck,
+				1000
+			).then((ticketRes) => {
+				if (ticketRes.ticket_crc && ticketRes.ticket_crc.length >= 1) {
+					reject(new Error("Failed to unauthorize tickets"));
+					return;
+				}
+
+				resolve(true);
+			}).catch(reject);
 		});
 	}
 

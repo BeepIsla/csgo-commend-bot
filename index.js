@@ -448,9 +448,7 @@ function handleChunk(chunk, toCommend, serverSteamID, matchID) {
 						chunk: chunk,
 						toCommend: toCommend,
 						serverSteamID: serverSteamID,
-						matchID: matchID,
-
-						debug: config.debug
+						matchID: matchID
 					});
 				} else {
 					child.send({
@@ -460,9 +458,7 @@ function handleChunk(chunk, toCommend, serverSteamID, matchID) {
 						chunk: chunk,
 						toReport: toCommend /* Variable is named "toCommend" but its just the account ID so whatever */,
 						serverSteamID: serverSteamID,
-						matchID: matchID,
-
-						debug: config.debug
+						matchID: matchID
 					});
 				}
 				return;
@@ -480,6 +476,17 @@ function handleChunk(chunk, toCommend, serverSteamID, matchID) {
 
 			if (msg.type === "loggedOn") {
 				console.log("cyan", "[" + msg.username + "] Logged onto Steam - GC Time: " + new Date(msg.hello.rtime32_gc_welcome_timestamp * 1000).toLocaleString());
+				return;
+			}
+
+			if (msg.type === "authError") {
+				console.log("red", "[" + msg.username + "] Failed to authenticate to target server");
+				res.error.push(msg.error);
+				return;
+			}
+
+			if (msg.type === "auth") {
+				console.log("magenta", "[" + msg.username + "] Authenticated with target server with ticket " + msg.crc);
 				return;
 			}
 
