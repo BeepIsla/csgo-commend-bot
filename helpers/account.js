@@ -386,7 +386,8 @@ module.exports = class Account extends Events {
 					rpt_speedhack: rpt_speedhack ? 1 : 0,
 					rpt_teamharm: rpt_teamharm ? 1 : 0,
 					rpt_textabuse: rpt_textabuse ? 1 : 0,
-					rpt_voiceabuse: 0
+					rpt_voiceabuse: 0,
+					report_from_demo: false
 				},
 				this.csgoUser.Protos.csgo.ECsgoGCMsg.k_EMsgGCCStrike15_v2_ClientReportResponse,
 				this.csgoUser.Protos.csgo.CMsgGCCStrike15_v2_ClientReportResponse,
