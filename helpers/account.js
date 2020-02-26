@@ -4,7 +4,6 @@ const SteamTotp = require("steam-totp");
 const SteamID = require("steamid");
 const StdLib = require("@doctormckay/stdlib");
 const GameCoordinator = require("./GameCoordinator.js");
-const VDF = require("./VDF.js");
 
 module.exports = class Account extends Events {
 	constructor(isTarget = false, proxy = undefined) {
@@ -161,6 +160,7 @@ module.exports = class Account extends Events {
 						return;
 					}
 
+					this.setGamesPlayed(this.getAnonymousServerID());
 					resolve(welcome);
 				}).catch((err) => {
 					this.steamUser.logOff();
@@ -226,7 +226,16 @@ module.exports = class Account extends Events {
 		});
 	}
 
-	authenticate(serverID) {
+	getAnonymousServerID() {
+		let sid = new SteamID();
+		sid.universe = SteamID.Universe.PUBLIC;
+		sid.type = SteamID.Type.ANON_GAMESERVER;
+		sid.instance = 14196;
+		sid.accountid = 1;
+		return sid.getSteamID64();
+	}
+
+	authenticate() {
 		return new Promise(async (resolve, reject) => {
 			let authTicket = await this.steamUser.getAuthSessionTicket(730).catch(reject);
 			if (!authTicket) {
@@ -248,7 +257,7 @@ module.exports = class Account extends Events {
 						{
 							estate: 2,
 							eresult: 0,
-							steamid: serverID,
+							steamid: this.getAnonymousServerID(),
 							gameid: 730,
 							h_steam_pipe: this.steamUser._hSteamPipe,
 							ticket_crc: ticketCrc,
@@ -278,7 +287,8 @@ module.exports = class Account extends Events {
 				undefined,
 				this.csgoUser.Protos.steam.EMsg.k_EMsgClientAuthList,
 				{},
-				undefined, //this.csgoUser.Protos.steam.CMsgClientAuthList,
+				undefined, //this.csgoUser.Protos.steam.CMsgClientAuthList - (Steam-User automatically encodes this for us)
+							// TODO: Change sendMessage() to make this more consistent
 				{
 					tokens_left: this.steamUser._gcTokens.length,
 					last_request_seq: this.steamUser._authSeqMe,
@@ -302,33 +312,14 @@ module.exports = class Account extends Events {
 
 	/**
 	 * Commend a player
-	 * @param {String} serverID ServerID of our target
 	 * @param {Number} accountID AccountID of our target
-	 * @param {String} matchID Optional MatchID
 	 * @param {Boolean|Number} cmd_friendly Do we want to commend as friendly?
 	 * @param {Boolean|Number} cmd_teaching Do we want to commend as teaching?
 	 * @param {Boolean|Number} cmd_leader Do we want to commend as leader?
 	 * @returns {Promise.<Object>}
 	 */
-	commendPlayer(serverID, accountID, matchID, cmd_friendly, cmd_teaching, cmd_leader) {
-		return new Promise(async (resolve, reject) => {
-			this.setGamesPlayed(serverID);
-
-			// Wait for the ServerID to set
-			await new Promise(p => setTimeout(p, 50));
-
-			if (this.errored) {
-				return;
-			}
-
-			if (typeof matchID === "number") {
-				matchID = String(matchID);
-			}
-
-			if (typeof matchID === "string" && (matchID.toUpperCase() === "AUTO" || matchID.length <= 0 || !/^\d+$/.test(matchID))) {
-				matchID = "0";
-			}
-
+	commendPlayer(accountID, cmd_friendly, cmd_teaching, cmd_leader) {
+		return new Promise((resolve, reject) => {
 			this.csgoUser.sendMessage(
 				730,
 				this.csgoUser.Protos.csgo.ECsgoGCMsg.k_EMsgGCCStrike15_v2_ClientCommendPlayer,
@@ -336,7 +327,7 @@ module.exports = class Account extends Events {
 				this.csgoUser.Protos.csgo.CMsgGCCStrike15_v2_ClientCommendPlayer,
 				{
 					account_id: accountID,
-					match_id: matchID,
+					match_id: "0",
 					commendation: {
 						cmd_friendly: cmd_friendly ? 1 : 0,
 						cmd_teaching: cmd_teaching ? 1 : 0,
@@ -352,9 +343,7 @@ module.exports = class Account extends Events {
 
 	/**
 	 * Report a player
-	 * @param {String} serverID ServerID of our target
 	 * @param {Number} accountID AccountID of our target
-	 * @param {String} matchID Optional MatchID
 	 * @param {Boolean|Number} rpt_aimbot Do we want to report as aimbotting?
 	 * @param {Boolean|Number} rpt_wallhack Do we want to report as wallhacking?
 	 * @param {Boolean|Number} rpt_speedhack Do we want to report as other hacking?
@@ -362,17 +351,8 @@ module.exports = class Account extends Events {
 	 * @param {Boolean|Number} rpt_textabuse Do we want to report as text abusing?
 	 * @returns {Promise.<Object>}
 	 */
-	reportPlayer(serverID, accountID, matchID, rpt_aimbot, rpt_wallhack, rpt_speedhack, rpt_teamharm, rpt_textabuse) {
-		return new Promise(async (resolve, reject) => {
-			this.setGamesPlayed(serverID);
-
-			// Wait for the ServerID to set
-			await new Promise(p => setTimeout(p, 50));
-
-			if (this.errored) {
-				return;
-			}
-
+	reportPlayer(accountID, rpt_aimbot, rpt_wallhack, rpt_speedhack, rpt_teamharm, rpt_textabuse) {
+		return new Promise((resolve, reject) => {
 			this.csgoUser.sendMessage(
 				730,
 				this.csgoUser.Protos.csgo.ECsgoGCMsg.k_EMsgGCCStrike15_v2_ClientReportPlayer,
@@ -380,7 +360,7 @@ module.exports = class Account extends Events {
 				this.csgoUser.Protos.csgo.CMsgGCCStrike15_v2_ClientReportPlayer,
 				{
 					account_id: accountID,
-					match_id: matchID,
+					match_id: "0",
 					rpt_aimbot: rpt_aimbot ? 1 : 0,
 					rpt_wallhack: rpt_wallhack ? 1 : 0,
 					rpt_speedhack: rpt_speedhack ? 1 : 0,
@@ -397,149 +377,10 @@ module.exports = class Account extends Events {
 	}
 
 	/**
-	 * Get the server our target is on
-	 * @param {Number} accountid Target account ID
-	 * @return {Promise.<Object>}
-	 */
-	getTargetServer(accountid) {
-		return new Promise((resolve, reject) => {
-			if (this.errored) {
-				return;
-			}
-
-			this.csgoUser.sendMessage(
-				undefined,
-				7502,
-				{
-					routing_appid: 730
-				},
-				this.csgoUser.Protos.steam.CMsgClientRichPresenceRequest,
-				{
-					steamid_request: [
-						SteamID.fromIndividualAccountID(accountid).getSteamID64()
-					]
-				},
-				7503,
-				this.csgoUser.Protos.steam.CMsgClientRichPresenceInfo,
-				5000
-			).then((info) => {
-				if (info.rich_presence.length <= 0) {
-					reject(new Error("Got no Steam rich presence data"));
-					return;
-				}
-
-				if (!info.rich_presence[0].rich_presence_kv) {
-					reject(new Error("Got no Steam rich presence data"));
-					return;
-				}
-
-				let decoded = undefined;
-				try {
-					decoded = VDF.decode(info.rich_presence[0].rich_presence_kv);
-				} catch { }
-
-				if (!decoded || !decoded.RP) {
-					reject(new Error("Failed to decode Steam rich presence keyvalues"));
-					return;
-				}
-
-				if (!decoded.RP.connect) {
-					reject(new Error("Target is likely not in a server or in a full server // Failed to find connect bytes"));
-					return;
-				}
-
-				// Parse tokens
-				let conBuf = Buffer.from(decoded.RP.connect.replace(/^\+gcconnect/, "").replace(/^G/, ""), "hex");
-				if (conBuf.length !== 12) {
-					reject(new Error("Target is likely in a lobby and not on a server // Requiring connect string of 12 bytes but received " + conBuf.length));
-					return;
-				}
-
-				let joinToken = conBuf.readInt32BE(0);
-				let accountID = conBuf.readInt32BE(4);
-				let joinIpp = conBuf.readInt32BE(8);
-
-				this.csgoUser.sendMessage(
-					730,
-					this.csgoUser.Protos.csgo.ECsgoGCMsg.k_EMsgGCCStrike15_v2_ClientRequestJoinFriendData,
-					{},
-					this.csgoUser.Protos.csgo.CMsgGCCStrike15_v2_ClientRequestJoinFriendData,
-					{
-						version: 0,
-						account_id: accountID,
-						join_token: joinToken,
-						join_ipp: joinIpp
-					},
-					this.csgoUser.Protos.csgo.ECsgoGCMsg.k_EMsgGCCStrike15_v2_ClientRequestJoinFriendData,
-					this.csgoUser.Protos.csgo.CMsgGCCStrike15_v2_ClientRequestJoinFriendData,
-					5000
-				).then((data) => {
-					if (data.errormsg) {
-						reject(new Error("Received join error for community server: " + data.errormsg));
-						return;
-					}
-
-					if (!data.res || !data.res.serverid) {
-						reject(new Error("Failed to get community server join data"));
-						return;
-					}
-
-					resolve({
-						serverID: data.res.serverid,
-						isValve: data.res.reservation && data.res.reservation.game_type,
-						serverIP: data.res.server_address
-					});
-				}).catch(reject);
-			}).catch(reject);
-		});
-	}
-
-	getTargetServerValve(accountid) {
-		return new Promise((resolve, reject) => {
-			if (this.errored) {
-				return;
-			}
-
-			this.csgoUser.sendMessage(
-				730,
-				this.csgoUser.Protos.csgo.ECsgoGCMsg.k_EMsgGCCStrike15_v2_ClientRequestWatchInfoFriends2,
-				{},
-				this.csgoUser.Protos.csgo.CMsgGCCStrike15_v2_ClientRequestWatchInfoFriends,
-				{
-					account_ids: [
-						accountid
-					]
-				},
-				this.csgoUser.Protos.csgo.ECsgoGCMsg.k_EMsgGCCStrike15_v2_GCToClientSteamdatagramTicket,
-				this.csgoUser.Protos.csgo.CMsgGCToClientSteamDatagramTicket,
-				5000
-			).then((info) => {
-				if (!info.serialized_ticket) {
-					reject(new Error("Got no CSGO response data for Valve Server"));
-					return;
-				}
-
-				let serverID = info.serialized_ticket.readBigUInt64LE(72);
-				let matchID = info.serialized_ticket.readBigUInt64LE(93);
-
-				resolve({
-					// This used to be the real servers IP and ID but it no longer seems to be
-					serverID: serverID.toString(),
-					isValve: true,
-					matchID: matchID.toString()
-				});
-			}).catch((err) => {
-				reject(new Error("Failed to receive Valve CSGO Server information"));
-			});
-		});
-	}
-
-	/**
 	 * Log out from the account
 	 */
 	logOff() {
 		this.steamUser.removeListener("error", this._steamErrorHandler);
-
 		this.steamUser.logOff();
 	}
 }

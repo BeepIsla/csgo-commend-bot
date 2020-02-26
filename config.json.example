@@ -16,14 +16,6 @@
 		"password": "",
 		"sharedSecret": ""
 	},
-	"fetcher": {
-		"username": "Account",
-		"password": "Password",
-		"sharedSecret": "",
-		"maxTries": 10,
-		"tryDelay": 2500,
-		"askSteamGuard": true
-	},
 	"proxy": {
 		"enabled": false,
 		"file": "proxies.txt",
@@ -32,12 +24,9 @@
 	"type": "COMMEND",
 	"method": "SERVER",
 	"target": "https://steamcommunity.com/id/gabelogannewell",
-	"serverID": "auto",
-	"matchID": "0",
 	"perChunk": 20,
 	"betweenChunks": 300000,
 	"cooldown": 28800000,
-	"switchServerAfterChunks": 5,
 	"steamWebAPIKey": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
 	"disableUpdateCheck": false
 }

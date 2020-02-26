@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.7.0
+- Removed ServerID
+- Removed MatchID
+- Removed fetcher
+- Updated libraries
+- Internal code changes
+
 ## 2.6.1
 - Fixed commend/report bot
   - No longer works on Competitive and Wingman
