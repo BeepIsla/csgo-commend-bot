@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.7.1
+- Increased authorization timeout from 5 to 20 seconds
+- Increased deauthorization timeout from 1 to 5 seconds
+- More internal code changes
+- Better error handling
+
 ## 2.7.0
 - Removed ServerID
 - Removed MatchID

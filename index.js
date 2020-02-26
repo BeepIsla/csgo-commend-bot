@@ -332,128 +332,142 @@ function handleChunk(chunk, target) {
 		};
 
 		child.on("message", async (msg) => {
-			if (msg.type === "ready") {
-				child.send({
-					isCommend: config.type.toUpperCase() === "COMMEND",
-					isReport: config.type.toUpperCase() === "REPORT",
+			switch (msg.type) {
+				case "ready": {
+					child.send({
+						isCommend: config.type.toUpperCase() === "COMMEND",
+						isReport: config.type.toUpperCase() === "REPORT",
 
-					chunk: chunk,
-					target: target
-				});
-				return;
-			}
+						chunk: chunk,
+						target: target
+					});
+					break;
+				}
 
-			if (msg.type === "error") {
-				console.error("The child has exited due to an error", msg.error);
-				return;
-			}
+				case "error": {
+					console.error("The child has exited due to an error", msg.error);
+					break;
+				}
 
-			if (msg.type === "logging") {
-				console.log("yellow", "[" + msg.username + "] Logging into Steam");
-				return;
-			}
+				case "logging": {
+					console.log("yellow", "[" + msg.username + "] Logging into Steam");
+					break;
+				}
 
-			if (msg.type === "loggedOn") {
-				console.log("cyan", "[" + msg.username + "] Logged onto Steam - GC Time: " + new Date(msg.hello.rtime32_gc_welcome_timestamp * 1000).toLocaleString());
-				return;
-			}
+				case "loggedOn": {
+					console.log("cyan", "[" + msg.username + "] Logged onto Steam - GC Time: " + new Date(msg.hello.rtime32_gc_welcome_timestamp * 1000).toLocaleString());
+					break;
+				}
 
-			if (msg.type === "authError") {
-				console.log("red", "[" + msg.username + "] Failed to authenticate to target server");
-				res.error.push(msg.error);
-				return;
-			}
+				case "authError": {
+					if (msg.error.message.startsWith("Received authlist for ticket")) {
+						console.log("red", "[" + msg.username + "] " + msg.error.message);
+					} else {
+						console.log("red", "[" + msg.username + "] Failed to authenticate to anonymous server");
+					}
 
-			if (msg.type === "auth") {
-				console.log("magenta", "[" + msg.username + "] Authenticated to anonymous server with ticket " + msg.crc);
-				return;
-			}
+					res.error.push(msg.error);
+					break;
+				}
 
-			if (msg.type === "commended" || msg.type === "reported") {
-				await db.run("UPDATE accounts SET lastCommend = " + Date.now() + " WHERE username = \"" + msg.username + "\"").catch(() => { });
+				case "auth": {
+					console.log("magenta", "[" + msg.username + "] Authenticated to anonymous server with ticket " + msg.crc);
+					break;
+				}
 
-				if (msg.response.response_result === 2 && msg.type === "commended") {
-					// Already commended
+				case "commended":
+				case "reported": {
+					await db.run("UPDATE accounts SET lastCommend = " + Date.now() + " WHERE username = \"" + msg.username + "\"").catch(() => { });
+
+					if (msg.response.response_result === 2 && msg.type === "commended") {
+						// Already commended
+						res.error.push(msg.response);
+
+						console.log("red", "[" + msg.username + "] Got response code " + msg.response.response_result + ", already commended target (" + (res.error.length + res.success.length) + "/" + chunk.length + ")");
+
+						await db.run("INSERT INTO commended (username, commended, timestamp) VALUES (\"" + msg.username + "\", " + target + ", " + Date.now() + ")").catch(() => { });
+						return;
+					}
+
+					if (msg.response.response_result === 1) {
+						// Success commend
+						res.success.push(msg.response);
+
+						if (msg.type === "commended") {
+							console.log("green", "[" + msg.username + "] Successfully sent a commend with response code " + msg.response.response_result + " - Remaining Commends: " + msg.response.tokens + " (" + (res.error.length + res.success.length) + "/" + chunk.length + ")");
+						} else {
+							console.log("green", "[" + msg.username + "] Successfully sent a report with response code " + msg.response.response_result + " - " + msg.confirmation + " (" + (res.error.length + res.success.length) + "/" + chunk.length + ")");
+						}
+
+						await db.run("INSERT INTO commended (username, commended, timestamp) VALUES (\"" + msg.username + "\", " + target + ", " + Date.now() + ")").catch(() => { });
+						return;
+					}
+
+					// Unknown response code
 					res.error.push(msg.response);
 
-					console.log("red", "[" + msg.username + "] Got response code " + msg.response.response_result + ", already commended target (" + (res.error.length + res.success.length) + "/" + chunk.length + ")");
-
-					await db.run("INSERT INTO commended (username, commended, timestamp) VALUES (\"" + msg.username + "\", " + target + ", " + Date.now() + ")").catch(() => { });
-					return;
+					console.log("red", "[" + msg.username + "] " + (config.type.toUpperCase() === "REPORT" ? "Reported" : "Commended") + " but got invalid success code " + msg.response.response_result + " (" + (res.error.length + res.success.length) + "/" + chunk.length + ")");
+					break;
 				}
 
-				if (msg.response.response_result === 1) {
-					// Success commend
-					res.success.push(msg.response);
+				case "commendErr":
+				case "reportErr": {
+					res.error.push(msg.error);
 
-					if (msg.type === "commended") {
-						console.log("green", "[" + msg.username + "] Successfully sent a commend with response code " + msg.response.response_result + " - Remaining Commends: " + msg.response.tokens + " (" + (res.error.length + res.success.length) + "/" + chunk.length + ")");
-					} else {
-						console.log("green", "[" + msg.username + "] Successfully sent a report with response code " + msg.response.response_result + " - " + msg.confirmation + " (" + (res.error.length + res.success.length) + "/" + chunk.length + ")");
-					}
+					console.log("red", "[" + msg.username + "] Failed to " + (config.type.toUpperCase() === "REPORT" ? "report" : "commend") + " (" + (res.error.length + res.success.length) + "/" + chunk.length + ")", msg.error);
 
-					await db.run("INSERT INTO commended (username, commended, timestamp) VALUES (\"" + msg.username + "\", " + target + ", " + Date.now() + ")").catch(() => { });
-					return;
+					await db.run("UPDATE accounts SET lastCommend = " + Date.now() + " WHERE username = \"" + msg.username + "\"").catch(() => { });
+					break;
 				}
 
-				// Unknown response code
-				res.error.push(msg.response);
-
-				console.log("red", "[" + msg.username + "] " + (config.type.toUpperCase() === "REPORT" ? "Reported" : "Commended") + " but got invalid success code " + msg.response.response_result + " (" + (res.error.length + res.success.length) + "/" + chunk.length + ")");
-				return;
-			}
-
-			if (msg.type === "commendErr" || msg.type === "reportErr") {
-				res.error.push(msg.error);
-
-				console.log("red", "[" + msg.username + "] Failed to " + (config.type.toUpperCase() === "REPORT" ? "report" : "commend") + " (" + (res.error.length + res.success.length) + "/" + chunk.length + ")", msg.error);
-
-				await db.run("UPDATE accounts SET lastCommend = " + Date.now() + " WHERE username = \"" + msg.username + "\"").catch(() => { });
-				return;
-			}
-
-			if (msg.type === "halfwayError") {
-				console.log("red", "[" + msg.username + "] Fatal error after logging in and has been marked as invalid (" + (res.error.length + res.success.length) + "/" + chunk.length + ")", msg.error);
-				await db.run("UPDATE accounts SET operational = 0 WHERE \"username\" = \"" + msg.username + "\"");
-				return;
-			}
-
-			if (msg.type === "failLogin") {
-				res.error.push(msg.error);
-
-				let ignoreCodes = [
-					SteamUser.EResult.Fail,
-					SteamUser.EResult.InvalidPassword,
-					SteamUser.EResult.AccessDenied,
-					SteamUser.EResult.Banned,
-					SteamUser.EResult.AccountNotFound,
-					SteamUser.EResult.Suspended,
-					SteamUser.EResult.AccountLockedDown,
-					SteamUser.EResult.IPBanned,
-					SteamUser.EResult.AccountDisabled
-				];
-
-				if (typeof msg.error.eresult === "number" && !ignoreCodes.includes(msg.error.eresult)) {
-					console.log("red", "[" + msg.username + "] Failed to login (" + (res.error.length + res.success.length) + "/" + chunk.length + ")", msg.error);
-				} else if (msg.error && msg.error.message === "Steam Guard required") {
-					console.log("red", "[" + msg.username + "] Requires a Steam Guard code and has been marked as invalid (" + (res.error.length + res.success.length) + "/" + chunk.length + ")", msg.error);
+				case "halfwayError": {
+					console.log("red", "[" + msg.username + "] Fatal error after logging in and has been marked as invalid (" + (res.error.length + res.success.length) + "/" + chunk.length + ")", msg.error);
 					await db.run("UPDATE accounts SET operational = 0 WHERE \"username\" = \"" + msg.username + "\"");
-				} else if (msg.error && msg.error.message === "VAC Banned") {
-					console.log("red", "[" + msg.username + "] Has been VAC banned in CSGO and has been marked as invalid (" + (res.error.length + res.success.length) + "/" + chunk.length + ")", msg.error);
-					await db.run("UPDATE accounts SET operational = 0 WHERE \"username\" = \"" + msg.username + "\"");
-				} else if (msg.error && msg.error.message === "Game Banned") {
-					console.log("red", "[" + msg.username + "] Has been Game banned in CSGO and has been marked as invalid (" + (res.error.length + res.success.length) + "/" + chunk.length + ")", msg.error);
-					await db.run("UPDATE accounts SET operational = 0 WHERE \"username\" = \"" + msg.username + "\"");
-				} else {
-					// Add more possible errors which occur if proxies are not working correctly
-					if (((typeof msg.error.message === "string" && /^HTTP CONNECT \d+.*$/i.test(msg.error.message)) || ["Failed to log in within given 60000ms", "Proxy connection timed out"].includes(msg.error.message) || ["ETIMEDOUT"].includes(msg.error.code)) && config.proxy.enabled) {
-						console.log("red", "[" + msg.username + "] Failed to login and due to proxy timeout (" + (res.error.length + res.success.length) + "/" + chunk.length + ")", msg.error);
-					} else {
-						console.log("red", "[" + msg.username + "] Failed to login and has been marked as invalid (" + (res.error.length + res.success.length) + "/" + chunk.length + ")", msg.error);
+					break;
+				}
+
+				case "failLogin": {
+					res.error.push(msg.error);
+
+					let ignoreCodes = [
+						SteamUser.EResult.Fail,
+						SteamUser.EResult.InvalidPassword,
+						SteamUser.EResult.AccessDenied,
+						SteamUser.EResult.Banned,
+						SteamUser.EResult.AccountNotFound,
+						SteamUser.EResult.Suspended,
+						SteamUser.EResult.AccountLockedDown,
+						SteamUser.EResult.IPBanned,
+						SteamUser.EResult.AccountDisabled
+					];
+
+					if (typeof msg.error.eresult === "number" && !ignoreCodes.includes(msg.error.eresult)) {
+						console.log("red", "[" + msg.username + "] Failed to login (" + (res.error.length + res.success.length) + "/" + chunk.length + ")", msg.error);
+					} else if (msg.error && msg.error.message === "Steam Guard required") {
+						console.log("red", "[" + msg.username + "] Requires a Steam Guard code and has been marked as invalid (" + (res.error.length + res.success.length) + "/" + chunk.length + ")", msg.error);
 						await db.run("UPDATE accounts SET operational = 0 WHERE \"username\" = \"" + msg.username + "\"");
+					} else if (msg.error && msg.error.message === "VAC Banned") {
+						console.log("red", "[" + msg.username + "] Has been VAC banned in CSGO and has been marked as invalid (" + (res.error.length + res.success.length) + "/" + chunk.length + ")", msg.error);
+						await db.run("UPDATE accounts SET operational = 0 WHERE \"username\" = \"" + msg.username + "\"");
+					} else if (msg.error && msg.error.message === "Game Banned") {
+						console.log("red", "[" + msg.username + "] Has been Game banned in CSGO and has been marked as invalid (" + (res.error.length + res.success.length) + "/" + chunk.length + ")", msg.error);
+						await db.run("UPDATE accounts SET operational = 0 WHERE \"username\" = \"" + msg.username + "\"");
+					} else {
+						// Add more possible errors which occur if proxies are not working correctly
+						if (((typeof msg.error.message === "string" && /^HTTP CONNECT \d+.*$/i.test(msg.error.message)) || ["Failed to log in within given 60000ms", "Proxy connection timed out"].includes(msg.error.message) || ["ETIMEDOUT"].includes(msg.error.code)) && config.proxy.enabled) {
+							console.log("red", "[" + msg.username + "] Failed to login and due to proxy timeout (" + (res.error.length + res.success.length) + "/" + chunk.length + ")", msg.error);
+						} else {
+							console.log("red", "[" + msg.username + "] Failed to login and has been marked as invalid (" + (res.error.length + res.success.length) + "/" + chunk.length + ")", msg.error);
+							await db.run("UPDATE accounts SET operational = 0 WHERE \"username\" = \"" + msg.username + "\"");
+						}
 					}
+					break;
 				}
-				return;
+
+				default: {
+					// This should never happen
+					break;
+				}
 			}
 		});
 

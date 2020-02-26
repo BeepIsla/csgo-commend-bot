@@ -269,7 +269,7 @@ module.exports = class Account extends Events {
 				},
 				this.csgoUser.Protos.steam.EMsg.k_EMsgClientAuthListAck,
 				this.csgoUser.Protos.steam.CMsgClientAuthListAck,
-				5000
+				20000
 			).then((ticketRes) => {
 				if (!ticketRes.ticket_crc || ticketRes.ticket_crc.length <= 0 || ticketRes.ticket_crc[0] !== ticketCrc) {
 					reject(new Error("Received authlist for ticket " + ticketRes.ticket_crc[0] + " but expected " + ticketCrc));
@@ -298,7 +298,7 @@ module.exports = class Account extends Events {
 				},
 				this.csgoUser.Protos.steam.EMsg.k_EMsgClientAuthListAck,
 				this.csgoUser.Protos.steam.CMsgClientAuthListAck,
-				1000
+				5000
 			).then((ticketRes) => {
 				if (ticketRes.ticket_crc && ticketRes.ticket_crc.length >= 1) {
 					reject(new Error("Failed to unauthorize tickets"));
