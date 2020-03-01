@@ -237,8 +237,17 @@ module.exports = class Account extends Events {
 
 	authenticate() {
 		return new Promise(async (resolve, reject) => {
+			let ignoreContinuation = false;
+			let authSessionTicketTimeout = setTimeout(() => {
+				ignoreContinuation = true;
+				reject(new Error("Failed to get auth session ticket"));
+			}, 10000);
+
 			let authTicket = await this.steamUser.getAuthSessionTicket(730).catch(reject);
-			if (!authTicket) {
+
+			clearTimeout(authSessionTicketTimeout);
+
+			if (!authTicket || ignoreContinuation) {
 				return;
 			}
 
