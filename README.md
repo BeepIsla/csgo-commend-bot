@@ -1,6 +1,6 @@
 # CSGO Commend Bot
 
-Allows you to send commends and reports ín CSGO using bots, though commend botting is the focus of it and reporting is just a little side thing.
+Allows you to send commends and reports in CSGO using bots, though commend botting is the focus of it and reporting is just a little side thing.
 
 **Please view the [Changelog](./CHANGELOG.md) for a list of changes.**
 
