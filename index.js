@@ -43,7 +43,7 @@ console.log = (color, ...args) => {
 	}
 
 	try {
-		config = require("./config.json");
+		config = require(path.resolve('config.json'));
 	} catch (err) {
 		let errPosition = err.message.split(": ").pop().trim();
 		let match = errPosition.match(/^Unexpected (?<type>.*) in JSON at position (?<position>.*)$/i);
