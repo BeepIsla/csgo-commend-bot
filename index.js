@@ -129,7 +129,7 @@ console.log = (color, ...args) => {
 
 	if (config.proxy && config.proxy.file && config.proxy.switchProxyEveryXaccounts && config.proxy.enabled) {
 		console.log("white", "Loading proxies...");
-		let proxyFilePath = path.join(__dirname, config.proxy.file);
+		let proxyFilePath = path.resolve(config.proxy.file);
 		if (!fs.existsSync(proxyFilePath)) {
 			console.log("red", "Could not find proxy file \"" + config.proxy.file + "\" (" + proxyFilePath + ")");
 			return;
