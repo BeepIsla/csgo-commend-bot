@@ -19,7 +19,7 @@ module.exports = class Helper {
 				if (fs.existsSync(p)) {
 					return this.deleteRecursive(p);
 				} else {
-					return new Promise(r => r());
+					return Promise.resolve();
 				}
 			}));
 
