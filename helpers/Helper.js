@@ -16,11 +16,7 @@ module.exports = class Helper {
 			let deletes = ["Protobufs-master", "protobufs"];
 			await Promise.all(deletes.map(d => {
 				let p = path.join(dir, d);
-				if (fs.existsSync(p)) {
-					return this.deleteRecursive(p);
-				} else {
-					return Promise.resolve();
-				}
+				return fs.existsSync(p) ? this.deleteRecursive(p) : new Promise.resolve()
 			}));
 
 			let newProDir = path.join(dir, "Protobufs-master");
