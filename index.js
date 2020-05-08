@@ -228,7 +228,7 @@ console.log = (color, ...args) => {
 		}
 	}
 
-	let accountsToUse = await db.all("SELECT accounts.username, accounts.password, accounts.sharedSecret FROM accounts LEFT JOIN commended ON commended.username = accounts.username WHERE accounts.username NOT IN (SELECT username FROM commended WHERE commended = " + sid.accountid + " OR commended.username IS NULL) AND (" + Date.now() + " - accounts.lastCommend) >= " + config.cooldown + " AND accounts.operational = 1 GROUP BY accounts.username LIMIT " + totalNeeded);
+	let accountsToUse = await db.all("SELECT accounts.username, accounts.password, accounts.sharedSecret FROM accounts LEFT JOIN commended ON commended.username = accounts.username WHERE accounts.username NOT IN (SELECT username FROM commended WHERE commended = ? OR commended.username IS NULL) AND (? - accounts.lastCommend) >= ? AND accounts.operational = 1 GROUP BY accounts.username LIMIT ?", sid.accountid, Date.now(), config.cooldown, totalNeeded);
 	if (accountsToUse.length < totalNeeded) {
 		console.log("red", "Not enough accounts available at the current time, got " + accountsToUse.length + "/" + totalNeeded);
 		await db.close();
@@ -377,7 +377,7 @@ function handleChunk(chunk, target) {
 
 				case "commended":
 				case "reported": {
-					await db.run("UPDATE accounts SET lastCommend = " + Date.now() + " WHERE username = \"" + msg.username + "\"").catch(() => { });
+					await db.run("UPDATE accounts SET lastCommend = ? WHERE username = ?", Date.now(), msg.username).catch(() => { });
 
 					if (msg.response.response_result === 2 && msg.type === "commended") {
 						// Already commended
@@ -385,7 +385,7 @@ function handleChunk(chunk, target) {
 
 						console.log("red", "[" + msg.username + "] Got response code " + msg.response.response_result + ", already commended target (" + (res.error.length + res.success.length) + "/" + chunk.length + ")");
 
-						await db.run("INSERT INTO commended (username, commended, timestamp) VALUES (\"" + msg.username + "\", " + target + ", " + Date.now() + ")").catch(() => { });
+						await db.run("INSERT INTO commended (username, commended, timestamp) VALUES (?, ?, ?)", msg.username, target, Date.now()).catch(() => { });
 						return;
 					}
 
@@ -399,7 +399,7 @@ function handleChunk(chunk, target) {
 							console.log("green", "[" + msg.username + "] Successfully sent a report with response code " + msg.response.response_result + " - " + msg.confirmation + " (" + (res.error.length + res.success.length) + "/" + chunk.length + ")");
 						}
 
-						await db.run("INSERT INTO commended (username, commended, timestamp) VALUES (\"" + msg.username + "\", " + target + ", " + Date.now() + ")").catch(() => { });
+						await db.run("INSERT INTO commended (username, commended, timestamp) VALUES (?, ?, ?)", msg.username, target, Date.now()).catch(() => { });
 						return;
 					}
 
@@ -416,13 +416,13 @@ function handleChunk(chunk, target) {
 
 					console.log("red", "[" + msg.username + "] Failed to " + (config.type.toUpperCase() === "REPORT" ? "report" : "commend") + " (" + (res.error.length + res.success.length) + "/" + chunk.length + ")", msg.error);
 
-					await db.run("UPDATE accounts SET lastCommend = " + Date.now() + " WHERE username = \"" + msg.username + "\"").catch(() => { });
+					await db.run("UPDATE accounts SET lastCommend = ? WHERE username = ?", Date.now(), msg.username).catch(() => { });
 					break;
 				}
 
 				case "halfwayError": {
 					console.log("red", "[" + msg.username + "] Fatal error after logging in and has been marked as invalid (" + (res.error.length + res.success.length) + "/" + chunk.length + ")", msg.error);
-					await db.run("UPDATE accounts SET operational = 0 WHERE \"username\" = \"" + msg.username + "\"");
+					await db.run("UPDATE accounts SET operational = 0 WHERE username = ?", msg.username);
 					break;
 				}
 
@@ -445,20 +445,20 @@ function handleChunk(chunk, target) {
 						console.log("red", "[" + msg.username + "] Failed to login (" + (res.error.length + res.success.length) + "/" + chunk.length + ")", msg.error);
 					} else if (msg.error && msg.error.message === "Steam Guard required") {
 						console.log("red", "[" + msg.username + "] Requires a Steam Guard code and has been marked as invalid (" + (res.error.length + res.success.length) + "/" + chunk.length + ")", msg.error);
-						await db.run("UPDATE accounts SET operational = 0 WHERE \"username\" = \"" + msg.username + "\"");
+						await db.run("UPDATE accounts SET operational = 0 WHERE username = ?", msg.username);
 					} else if (msg.error && msg.error.message === "VAC Banned") {
 						console.log("red", "[" + msg.username + "] Has been VAC banned in CSGO and has been marked as invalid (" + (res.error.length + res.success.length) + "/" + chunk.length + ")", msg.error);
-						await db.run("UPDATE accounts SET operational = 0 WHERE \"username\" = \"" + msg.username + "\"");
+						await db.run("UPDATE accounts SET operational = 0 WHERE username = ?", msg.username);
 					} else if (msg.error && msg.error.message === "Game Banned") {
 						console.log("red", "[" + msg.username + "] Has been Game banned in CSGO and has been marked as invalid (" + (res.error.length + res.success.length) + "/" + chunk.length + ")", msg.error);
-						await db.run("UPDATE accounts SET operational = 0 WHERE \"username\" = \"" + msg.username + "\"");
+						await db.run("UPDATE accounts SET operational = 0 WHERE username = ?", msg.username);
 					} else {
 						// Add more possible errors which occur if proxies are not working correctly
 						if (((typeof msg.error.message === "string" && /^HTTP CONNECT \d+.*$/i.test(msg.error.message)) || ["Failed to log in within given 60000ms", "Proxy connection timed out"].includes(msg.error.message) || ["ETIMEDOUT"].includes(msg.error.code)) && config.proxy.enabled) {
 							console.log("red", "[" + msg.username + "] Failed to login and due to proxy timeout (" + (res.error.length + res.success.length) + "/" + chunk.length + ")", msg.error);
 						} else {
 							console.log("red", "[" + msg.username + "] Failed to login and has been marked as invalid (" + (res.error.length + res.success.length) + "/" + chunk.length + ")", msg.error);
-							await db.run("UPDATE accounts SET operational = 0 WHERE \"username\" = \"" + msg.username + "\"");
+							await db.run("UPDATE accounts SET operational = 0 WHERE username = ?", msg.username);
 						}
 					}
 					break;
