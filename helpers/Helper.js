@@ -55,7 +55,10 @@ module.exports = class Helper {
 		let gc = new GameCoordinator(user);
 
 		try {
-			return typeof gc.Protos.csgo.EGCBaseClientMsg.k_EMsgGCClientHello === "number";
+			return typeof gc.Protos.csgo.EGCBaseClientMsg.k_EMsgGCClientHello === "number" &&
+				typeof gc.Protos.steam.EMsg.k_EMsgClientAuthListAck === "number" &&
+				typeof gc.Protos.steam.EMsg.k_EMsgClientAuthList === "number"
+			;
 		} catch (e) {
 			return false;
 		}
@@ -114,6 +117,18 @@ module.exports = class Helper {
 		});
 	}
 
+	GetCurrentVersion(appid) {
+		return new Promise(async (resolve, reject) => {
+			let json = await this.GetJSON("https://api.steampowered.com/ISteamApps/UpToDateCheck/v1/?format=json&appid=" + appid + "&version=0");
+			if (!json.response) {
+				reject(json);
+				return;
+			}
+
+			resolve(json.response.required_version);
+		});
+	}
+
 	parseSteamID(input) {
 		return new Promise((resolve, reject) => {
 			let parsed = input.match(/^(((http(s){0,1}:\/\/){0,1}(www\.){0,1})steamcommunity\.com\/(id|profiles)\/){0,1}(?<parsed>[A-Z0-9-_]+)(\/{0,1}.{0,})$/i);
@@ -148,12 +163,53 @@ module.exports = class Helper {
 		});
 	}
 
+	GetActiveServer() {
+		return doRequest.call(this, "IGameServersService/GetServerList", "v1", {
+			limit: 1,
+			filter: "\\appid\\730\\noplayers\\1\\"
+		}, [
+			"response",
+			"servers"
+		], Array.isArray);
+	}
+
 	vanityURL(url) {
 		return doRequest.call(this, "ISteamUser/ResolveVanityURL", "v1", {
 			vanityurl: url
 		}, [
 			"response"
 		], null);
+	}
+
+	parseServerID(id) {
+		return new Promise((resolve, reject) => {
+			let sid = undefined;
+			try {
+				sid = new SteamID(id);
+			} catch (e) { }
+
+			if (sid && sid.isValid() && [3, 4].includes(sid.type) && sid.universe === 1) {
+				resolve(sid.getSteamID64());
+				return;
+			}
+
+			doRequest.call(this, "IGameServersService/GetServerList", "v1", {
+				limit: 1,
+				filter: "\\gameaddr\\" + id
+			}, [
+				"response",
+				"servers"
+			], Array.isArray).then((res) => {
+				if (!res[0].steamid) {
+					reject(new Error("Invalid Server IP"));
+					return;
+				}
+
+				resolve(res[0].steamid);
+			}).catch((err) => {
+				reject(err);
+			});
+		});
 	}
 
 	GetJSON(options) {
@@ -193,6 +249,13 @@ module.exports = class Helper {
 		}
 
 		return tempArray;
+	}
+
+	static intToString(ipInt) {
+		// Copied from https://github.com/DoctorMcKay/node-stdlib/blob/3a65f4116116fb8a0a82239a9cc0db35c44558d9/components/ipv4.js
+		let buf = Buffer.alloc(4);
+		buf.writeUInt32BE(ipInt >>> 0, 0);
+		return Array.prototype.join.call(buf, ".");
 	}
 }
 

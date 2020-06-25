@@ -19,8 +19,10 @@ process.on("message", async (msg) => {
 
 	const chunk = msg.chunk;
 	const target = msg.target;
+	const serverSteamID = msg.serverSteamID;
 	const isReport = msg.isReport;
 	const isCommend = msg.isCommend;
+	const matchID = msg.matchID;
 
 	try {
 		let done = 0;
@@ -37,7 +39,7 @@ process.on("message", async (msg) => {
 				process.send({
 					type: "halfwayError",
 					username: a.username,
-					error: serializeError.serializeError(err)
+					error: serializeError(err)
 				});
 
 				done += 1;
@@ -51,11 +53,11 @@ process.on("message", async (msg) => {
 					hello: hello
 				});
 
-				let auth = await a.authenticate().catch((err) => {
+				let auth = await a.authenticate(serverSteamID).catch((err) => {
 					process.send({
 						type: "authError",
 						username: a.username,
-						error: serializeError.serializeError(err)
+						error: serializeError(err)
 					});
 
 					a.removeAllListeners("error");
@@ -73,8 +75,10 @@ process.on("message", async (msg) => {
 				});
 
 				let args = [
+					serverSteamID,
 					target,
-					...(isCommend ? [
+					matchID,
+					(isCommend ? [
 						acc.commend.friendly,
 						acc.commend.teaching,
 						acc.commend.leader
@@ -98,7 +102,7 @@ process.on("message", async (msg) => {
 					process.send({
 						type: isCommend ? "commendErr" : "reportErr",
 						username: a.username,
-						error: serializeError.serializeError(err)
+						error: serializeError(err)
 					});
 				}).finally(() => {
 					a.removeAllListeners("error");
@@ -112,7 +116,7 @@ process.on("message", async (msg) => {
 				process.send({
 					type: "failLogin",
 					username: a.username,
-					error: serializeError.serializeError(err)
+					error: serializeError(err)
 				});
 
 				a.logOff();
@@ -130,7 +134,7 @@ process.on("message", async (msg) => {
 		process.send({
 			type: "error",
 			username: a.username,
-			error: serializeError.serializeError(err)
+			error: serializeError(err)
 		});
 
 		// The process should automatically exit once all bots have disconnected from Steam but it doesn't

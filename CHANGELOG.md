@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.8.0
+- Re-added ServerID, MatchID and Fetcher
+- Updated all libraries to their latest version
+- Improved protobuf checker
+- Fixed commend bot
+  - Probably still **does not** work on Competitive/Wingman
+  - Thanks pull-request: #464
+
 ## 2.7.1
 - Increased authorization timeout from 5 to 20 seconds
 - Increased deauthorization timeout from 1 to 5 seconds

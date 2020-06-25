@@ -13,7 +13,7 @@ let helper = null;
 	}
 
 	try {
-		config = require(path.resolve('config.json'));
+		config = require(path.resolve("config.json"));
 	} catch (err) {
 		let errPosition = err.message.split(": ").pop().trim();
 		let match = errPosition.match(/^Unexpected (?<type>.*) in JSON at position (?<position>.*)$/i);
@@ -33,7 +33,10 @@ let helper = null;
 	helper = new Helper(config.steamWebAPIKey);
 
 	console.log("Opening database...");
-	let db = await sqlite.open("./accounts.sqlite");
+	let db = await sqlite.open({
+		filename: "./accounts.sqlite",
+		driver: sqlite.Database
+	});
 
 	await Promise.all([
 		db.run("CREATE TABLE IF NOT EXISTS \"accounts\" (\"username\" TEXT NOT NULL UNIQUE, \"password\" TEXT NOT NULL, \"sharedSecret\" TEXT, \"lastCommend\" INTEGER NOT NULL DEFAULT -1, \"operational\" NUMERIC NOT NULL DEFAULT 1, PRIMARY KEY(\"username\"))"),
@@ -209,7 +212,7 @@ let helper = null;
 					break;
 				}
 
-				let chunks = new Helper().chunkArray(list, 100);
+				let chunks = helper.chunkArray(list, 100);
 				let changes = 0;
 				for (let chunk of chunks) {
 					let data = await db.run("INSERT OR IGNORE INTO accounts (\"username\", \"password\", \"sharedSecret\") VALUES " + chunk.map(s => "(?, ?, ?)").join(", "), ...chunk.map(s => [ s.username, s.password, s.sharedSecret ]).flat());
