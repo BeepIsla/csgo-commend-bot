@@ -15,7 +15,7 @@
 - Improved protobuf checker
 - Fixed commend bot
   - Probably still **does not** work on Competitive/Wingman
-  - Thanks pull-request: #464
+  - Thanks [inbroso](https://github.com/inbroso)
 
 ## 2.7.1
 - Increased authorization timeout from 5 to 20 seconds
