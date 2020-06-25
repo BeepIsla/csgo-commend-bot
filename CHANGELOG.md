@@ -1,18 +1,5 @@
 # Changelog
 
-## 2.7.1
-- Increased authorization timeout from 5 to 20 seconds
-- Increased deauthorization timeout from 1 to 5 seconds
-- More internal code changes
-- Better error handling
-
-## 2.7.0
-- Removed ServerID
-- Removed MatchID
-- Removed fetcher
-- Updated libraries
-- Internal code changes
-
 ## 2.6.1
 - Fixed commend/report bot
   - No longer works on Competitive and Wingman

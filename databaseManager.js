@@ -13,7 +13,7 @@ let helper = null;
 	}
 
 	try {
-		config = require(path.resolve('config.json'));
+		config = require("./config.json");
 	} catch (err) {
 		let errPosition = err.message.split(": ").pop().trim();
 		let match = errPosition.match(/^Unexpected (?<type>.*) in JSON at position (?<position>.*)$/i);
@@ -71,7 +71,7 @@ let helper = null;
 					message: "Enter username you want to set as operational"
 				});
 
-				let data = await db.run("UPDATE accounts SET operational = 1 WHERE username = ?", input.username).catch(() => { });
+				let data = await db.run("UPDATE accounts SET operational = 1 WHERE username = \"" + input.username + "\"").catch(() => { });
 				if (data.changes <= 0) {
 					console.log("Failed to set operational status of \"" + input.username + "\" to True - Username not found.");
 				} else {
@@ -209,14 +209,8 @@ let helper = null;
 					break;
 				}
 
-				let chunks = new Helper().chunkArray(list, 100);
-				let changes = 0;
-				for (let chunk of chunks) {
-					let data = await db.run("INSERT OR IGNORE INTO accounts (\"username\", \"password\", \"sharedSecret\") VALUES " + chunk.map(s => "(?, ?, ?)").join(", "), ...chunk.map(s => [ s.username, s.password, s.sharedSecret ]).flat());
-					changes += data.changes;
-				}
-
-				console.log("Successfully added " + changes + " account" + (changes === 1 ? "" : "s") + ". Duplicates have been ignored.");
+				let data = await db.run("INSERT OR IGNORE INTO accounts (\"username\", \"password\", \"sharedSecret\") VALUES " + list.map(s => "(\"" + s.username + "\", \"" + s.password + "\", \"" + s.sharedSecret + "\")").join(", "));
+				console.log("Successfully added " + data.changes + " account" + (data.changes === 1 ? "" : "s") + ". Duplicates have been ignored.");
 				break;
 			}
 
@@ -228,8 +222,8 @@ let helper = null;
 				});
 
 				let data = await Promise.all([
-					db.run("DELETE FROM commended WHERE username = ?", input.input),
-					db.run("DELETE FROM accounts WHERE username = ?", input.input)
+					db.run("DELETE FROM commended WHERE username = \"" + input.input + "\""),
+					db.run("DELETE FROM accounts WHERE username = \"" + input.input + "\"")
 				]);
 
 				console.log("Successfully removed " + data[0].changes + " entr" + (data[0].changes === 1 ? "y" : "ies") + " from the commend history and " + data[1].changes + " account" + (data[1].changes === 1 ? "" : "s"));
@@ -249,7 +243,7 @@ let helper = null;
 					break;
 				}
 
-				let data = await db.run("DELETE FROM commended WHERE commended = ?", sid.accountid);
+				let data = await db.run("DELETE FROM commended WHERE commended = " + sid.accountid);
 				console.log("Removed " + data.changes + " entr" + (data.changes === 1 ? "y" : "ies") + " from the commend history");
 				break;
 			}
@@ -267,7 +261,7 @@ let helper = null;
 					break;
 				}
 
-				let data = await db.all("SELECT * FROM commended WHERE commended = ?", sid.accountid);
+				let data = await db.all("SELECT * FROM commended WHERE commended = " + sid.accountid);
 				if (data.length <= 0) {
 					console.log("This user is not in the commend history");
 					break;
@@ -297,7 +291,7 @@ let helper = null;
 
 				let query = "SELECT username, password FROM accounts";
 				if (_export.response === "Exports only working accounts") {
-					query += " WHERE operational = 1";
+					query = "SELECT username, password FROM accounts WHERE operational = 1";
 				}
 
 				let input = await inquirer.prompt({
