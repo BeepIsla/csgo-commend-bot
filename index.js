@@ -4,8 +4,9 @@ const path = require("path");
 const SteamUser = require("steam-user");
 const fs = require("fs");
 const URL = require("url");
-const Helper = require("./helpers/Helper.js");
 const Target = require("./helpers/Target.js");
+const Helper = require("./helpers/Helper.js");
+const Account = require("./helpers/account.js");
 let config = null;
 
 process.on("unhandledRejection", console.error);
@@ -43,7 +44,7 @@ console.log = (color, ...args) => {
 	}
 
 	try {
-		config = require(path.resolve('config.json'));
+		config = require("./config.json");
 	} catch (err) {
 		let errPosition = err.message.split(": ").pop().trim();
 		let match = errPosition.match(/^Unexpected (?<type>.*) in JSON at position (?<position>.*)$/i);
@@ -66,6 +67,10 @@ console.log = (color, ...args) => {
 		totalNeeded = Math.max(config.report.aimbot, config.report.wallhack, config.report.speedhack, config.report.teamharm, config.report.abusive);
 	} else {
 		totalNeeded = Math.max(config.commend.friendly, config.commend.teaching, config.commend.leader);
+	}
+
+	if (typeof config.type === "undefined") {
+		config.type = "COMMEND";
 	}
 
 	if (!["LOGIN", "SERVER"].includes(config.method.toUpperCase())) {
@@ -100,11 +105,12 @@ console.log = (color, ...args) => {
 				fs.writeFileSync("./data/version", package.version);
 			}
 
-			let res = await helper.GetLatestVersion().catch(() => { });
+			let res = await helper.GetLatestVersion().catch(console.error);
+
 			if (package.version !== res) {
 				let repoURL = package.repository.url.split(".");
 				repoURL.pop();
-				console.log("red", "A new version is available on Github @ " + repoURL.join("."));
+				console.log("red", "\nA new version is available on Github @ " + repoURL.join("."));
 				console.log("red", "Downloading is optional but recommended. Make sure to check if there are any new values to be added in your old \"config.json\"");
 				await new Promise(p => setTimeout(p, 5000));
 			} else {
@@ -129,7 +135,7 @@ console.log = (color, ...args) => {
 
 	if (config.proxy && config.proxy.file && config.proxy.switchProxyEveryXaccounts && config.proxy.enabled) {
 		console.log("white", "Loading proxies...");
-		let proxyFilePath = path.resolve(config.proxy.file);
+		let proxyFilePath = path.join(__dirname, config.proxy.file);
 		if (!fs.existsSync(proxyFilePath)) {
 			console.log("red", "Could not find proxy file \"" + config.proxy.file + "\" (" + proxyFilePath + ")");
 			return;
@@ -181,61 +187,31 @@ console.log = (color, ...args) => {
 		return;
 	}
 
-	let sid = undefined;
+	let targetAcc = undefined;
+	let serverToUse = undefined;
+	let matchID = config.matchID;
+
 	if (config.method.toUpperCase() === "LOGIN") {
-		console.log("white", "Logging into target account...");
+		console.log("white", "Getting an available server");
+		serverToUse = (await helper.GetActiveServer()).shift().steamid;
 
-		// Its named sid even though its not really a SteamID but who cares
-		sid = new Target();
-		let welcome = await sid.login(config.account.username, config.account.password, config.account.sharedSecret).catch(async (err) => {
-			console.log("red", "Failed to log into Steam using account as target", err);
-			await db.close();
-
-			if (sid instanceof Target) {
-				sid.logOff();
-			}
-
-			// Force exit the process if it doesn't happen automatically within 15 seconds
-			setTimeout(process.exit, 15000, 1).unref();
-		});
-		if (!welcome) {
-			return;
-		}
-	} else {
+		console.log("white", "Logging into target account");
+		targetAcc = new Target(config.account.username, config.account.password, config.account.sharedSecret);
+		await targetAcc.login();
+	} else if (config.method.toUpperCase() === "SERVER") {
 		console.log("white", "Parsing target account...");
-		sid = await helper.parseSteamID(config.target).catch(async (err) => {
-			switch (err.message) {
-				case "Failed to parse SteamID": {
-					console.log("red", "Input is not in a valid format");
-					break;
-				}
-				case "Invalid Vanity URL": {
-					console.log("red", "Input is not a valid SteamID or VanityURL");
-					break;
-				}
-				default: {
-					console.error(err);
-				}
-			}
-
-			await db.close();
-
-			// Force exit the process if it doesn't happen automatically within 15 seconds
-			setTimeout(process.exit, 15000, 1).unref();
-		});
-		if (!sid) {
-			return;
-		}
+		targetAcc = (await helper.parseSteamID(config.target)).accountid;
 	}
 
-	let accountsToUse = await db.all("SELECT accounts.username, accounts.password, accounts.sharedSecret FROM accounts LEFT JOIN commended ON commended.username = accounts.username WHERE accounts.username NOT IN (SELECT username FROM commended WHERE commended = ? OR commended.username IS NULL) AND (? - accounts.lastCommend) >= ? AND accounts.operational = 1 GROUP BY accounts.username LIMIT ?", sid.accountid, Date.now(), config.cooldown, totalNeeded);
+	let accountsToUse = await db.all("SELECT accounts.username, accounts.password, accounts.sharedSecret FROM accounts LEFT JOIN commended ON commended.username = accounts.username WHERE accounts.username NOT IN (SELECT username FROM commended WHERE commended = " + (typeof targetAcc === "object" ? targetAcc.accountid : targetAcc) + " OR commended.username IS NULL) AND (" + Date.now() + " - accounts.lastCommend) >= " + config.cooldown + " AND accounts.operational = 1 GROUP BY accounts.username LIMIT " + totalNeeded);
 	if (accountsToUse.length < totalNeeded) {
-		console.log("red", "Not enough accounts available at the current time, got " + accountsToUse.length + "/" + totalNeeded);
-		await db.close();
+		console.log("red", "Not enough accounts available, got " + accountsToUse.length + "/" + totalNeeded);
 
-		if (sid instanceof Target) {
-			sid.logOff();
+		if (targetAcc instanceof Target) {
+			targetAcc.logOff();
 		}
+
+		await db.close();
 
 		// Force exit the process if it doesn't happen automatically within 15 seconds
 		setTimeout(process.exit, 15000, 1).unref();
@@ -244,16 +220,19 @@ console.log = (color, ...args) => {
 
 	// Inject what to commend with in our accounts
 	let proxySwitch = 0;
-	for (let i = 0; i < accountsToUse.length; i++) {
-		let chosen = accountsToUse.filter(a => typeof a[config.type.toUpperCase() === "REPORT" ? "report" : "commend"] === "object").length;
 
-		if (i > 0 && (i % config.proxy.switchProxyEveryXaccounts) === 0 && config.proxy && config.proxy.enabled) {
-			proxySwitch++;
-		}
+	if (config.type.toUpperCase() === "REPORT") {
+		for (let i = 0; i < accountsToUse.length; i++) {
+			let chosen = accountsToUse.filter(a => typeof a.report === "object").length;
 
-		accountsToUse[i].proxy = proxies[proxySwitch];
+			if (i > 0 && (i % config.proxy.switchProxyEveryXaccounts) === 0 && config.proxy && config.proxy.enabled) {
+				proxySwitch++;
 
-		if (config.type.toUpperCase() === "REPORT") {
+				if (proxySwitch >= proxies.length) {
+					proxySwitch = 0;
+				}
+			}
+
 			accountsToUse[i].proxy = proxies[proxySwitch];
 			accountsToUse[i].report = {
 				rpt_aimbot: config.report.aimbot > chosen ? true : false,
@@ -262,7 +241,16 @@ console.log = (color, ...args) => {
 				rpt_teamharm: config.report.teamharm > chosen ? true : false,
 				rpt_textabuse: config.report.abusive > chosen ? true : false
 			}
-		} else {
+		}
+	} else {
+		for (let i = 0; i < accountsToUse.length; i++) {
+			let chosen = accountsToUse.filter(a => typeof a.commend === "object").length;
+
+			if (i > 0 && (i % config.proxy.switchProxyEveryXaccounts) === 0 && config.proxy && config.proxy.enabled) {
+				proxySwitch++;
+			}
+
+			accountsToUse[i].proxy = proxies[proxySwitch];
 			accountsToUse[i].commend = {
 				friendly: config.commend.friendly > chosen ? true : false,
 				teaching: config.commend.teaching > chosen ? true : false,
@@ -271,27 +259,149 @@ console.log = (color, ...args) => {
 		}
 	}
 
+	if (config.debug) {
+		console.log(accountsToUse);
+	}
+
 	console.log("white", "Chunking " + accountsToUse.length + " account" + (accountsToUse.length === 1 ? "" : "s") + " into groups of " + config.perChunk + "...");
 	let chunks = helper.chunkArray(accountsToUse, config.perChunk);
 
-	for (let i = 0; i < chunks.length; i++) {
-		// Setup account every chunk just to make sure its all good
-		if (sid instanceof Target) {
-			await sid.setup().then((res) => {
-				console.log("cyan", "Successfully authenticated to anonymous server with ticket " + res);
-			}).catch((err) => {
-				if (err.message === "Failed to unauthorize tickets" || err.message.startsWith("Received authlist for ticket") || err.message === "Failed to send message: Timeout") {
-					console.log("red", err.message);
-				} else {
-					console.error(err);
+	if (config.method.toUpperCase() === "LOGIN") {
+		console.log("white", "Getting an available server");
+
+		serverToUse = (await helper.GetActiveServer()).shift().steamid;
+		console.log("white", "Selected available server " + serverToUse);
+
+		targetAcc.setGamesPlayed(serverToUse);
+	} else if (config.method.toUpperCase() === "SERVER") {
+		console.log("white", "Parsing server input");
+
+		if (config.serverID.toUpperCase() !== "AUTO") {
+			serverToUse = await helper.parseServerID(config.serverID).catch(console.error);
+			if (!serverToUse) {
+				console.log("red", "Could not find online server for " + config.serverID);
+
+				if (targetAcc instanceof Target) {
+					targetAcc.logOff();
 				}
-			});
+
+				await db.close();
+
+				// Force exit the process if it doesn't happen automatically within 15 seconds
+				setTimeout(process.exit, 15000, 1).unref();
+				return;
+			}
+
+			console.log("white", "Parsed server input to " + serverToUse);
+		}
+
+		if (config.serverID.toUpperCase() === "AUTO" || config.matchID.toUpperCase() === "AUTO") {
+			matchID = config.matchID.toUpperCase() === "AUTO" ? null : config.matchID;
+			let serverID = config.serverID.toUpperCase() === "AUTO" ? null : config.serverID;
+
+			console.log("blue", "Logging into fetcher account...");
+			let fetcher = new Account(config.fetcher.askSteamGuard);
+			await fetcher.login(config.fetcher.username, config.fetcher.password, config.fetcher.sharedSecret);
+
+			console.log("blue", "Trying to fetch target " + config.fetcher.maxTries + " time" + (config.fetcher.maxTries === 1 ? "" : "s") + " with a delay of " + config.fetcher.tryDelay + "ms");
+
+			let tries = 0;
+			while (!serverToUse) {
+				tries++;
+
+				if (tries > config.fetcher.maxTries) {
+					console.log("red", "Failed to find server after " + tries + " tr" + (tries === 1 ? "y" : "ies"));
+					break;
+				}
+
+				// Community Server
+				serverToUse = await fetcher.getTargetServer(targetAcc).catch((err) => {
+					if (err.message) {
+						console.log("red", err.message);
+					} else {
+						console.error(err);
+					}
+				});
+
+				if (!serverToUse) {
+					// Valve Server
+					serverToUse = await fetcher.getTargetServerValve(targetAcc).catch((err) => {
+						if (err.message) {
+							console.log("red", err.message);
+						} else {
+							console.error(err);
+						}
+					});
+
+					if (!serverToUse) {
+						await new Promise(p => setTimeout(p, config.fetcher.tryDelay));
+					}
+				}
+			}
+
+			if (!serverToUse) {
+				await db.close();
+
+				// Force exit the process if it doesn't happen automatically within 15 seconds
+				setTimeout(process.exit, 15000, 1).unref();
+				return;
+			}
+
+			serverID = serverID === null ? (serverToUse.serverID || "0") : serverID;
+			matchID = matchID === null ? (serverToUse.matchID || "0") : matchID;
+
+			console.log("green", "Found target on " + (serverToUse.isValve ? "Valve" : "Community") + " server " + serverID + " after " + tries + " tr" + (tries === 1 ? "y" : "ies") + " " + (matchID === "0" ? "" : ("(" + matchID + ")")));
+
+			serverToUse = serverID;
+
+			fetcher.logOff();
+		}
+	}
+
+	let info = await helper.getServerInfo(serverToUse).catch((err) => {
+		console.log("red", err.message === "Invalid Server" ? "Server is no longer available" : err);
+	});
+	if (!info) {
+		if (targetAcc instanceof Target) {
+			targetAcc.logOff();
+		}
+
+		await db.close();
+
+		// Force exit the process if it doesn't happen automatically within 15 seconds
+		setTimeout(process.exit, 15000, 1).unref();
+		return;
+	}
+
+	for (let i = 0; i < chunks.length; i++) {
+		if (i !== 0 && i % (config.switchServerAfterChunks || Number.MAX_SAFE_INTEGER) === 0 && config.method.toUpperCase() === "LOGIN") {
+			console.log("white", "Getting an available server after " + config.switchServerAfterChunks + " chunk" + (config.switchServerAfterChunks === 1 ? "" : "s"));
+
+			try {
+				let oldServer = serverToUse;
+				while (oldServer === serverToUse || !serverToUse) {
+					serverToUse = await helper.GetActiveServer().shift().steamid;
+
+					if (serverToUse === oldServer) {
+						console.log("red", "Old and new server are the same, retrying...");
+					}
+				}
+
+				console.log("white", "Selected available server " + serverToUse);
+			} catch {
+				console.log("red", "Failed to fetch new server, continuing with old server " + serverToUse);
+			}
+
+			targetAcc.setGamesPlayed(serverToUse);
 		}
 
 		console.log("white", "Logging in on chunk " + (i + 1) + "/" + chunks.length);
 
 		// Do commends
-		let result = await handleChunk(chunks[i], sid.accountid);
+		console.log("red","Preloading chunks... these commends will probably fail.");
+		let result = await handleChunk(chunks[i], (targetAcc instanceof Target ? targetAcc.accountid : targetAcc), serverToUse, matchID);
+		console.log("red","Now commending... these commends should be successful.");
+		result = await handleChunk(chunks[i], (targetAcc instanceof Target ? targetAcc.accountid : targetAcc), serverToUse, matchID);
 
 		totalSuccess += result.success.length;
 		totalFail += result.error.length;
@@ -306,18 +416,18 @@ console.log = (color, ...args) => {
 	}
 
 	// We are done here!
+	if (targetAcc instanceof Target) {
+		targetAcc.logOff();
+	}
+
 	await db.close();
 	console.log("magenta", "Finished all chunks with a total of " + totalSuccess + " successful and " + totalFail + " failed " + (config.type.toUpperCase() === "REPORT" ? "report" : "commend") + (totalFail === 1 ? "" : "s"));
-
-	if (sid instanceof Target) {
-		sid.logOff();
-	}
 
 	// Force exit the process if it doesn't happen automatically within 15 seconds
 	setTimeout(process.exit, 15000, 1).unref();
 })();
 
-function handleChunk(chunk, target) {
+function handleChunk(chunk, toCommend, serverSteamID, matchID) {
 	return new Promise(async (resolve, reject) => {
 		let child = ChildProcess.fork("./Bots.js", [], {
 			cwd: path.join(__dirname, "helpers"),
@@ -332,142 +442,142 @@ function handleChunk(chunk, target) {
 		};
 
 		child.on("message", async (msg) => {
-			switch (msg.type) {
-				case "ready": {
+			if (msg.type === "ready") {
+				if (config.type.toUpperCase() === "COMMEND") {
 					child.send({
-						isCommend: config.type.toUpperCase() === "COMMEND",
-						isReport: config.type.toUpperCase() === "REPORT",
+						isCommend: true,
+						isReport: false,
 
 						chunk: chunk,
-						target: target
+						toCommend: toCommend,
+						serverSteamID: serverSteamID,
+						matchID: matchID
 					});
-					break;
+				} else {
+					child.send({
+						isCommend: false,
+						isReport: true,
+
+						chunk: chunk,
+						toReport: toCommend /* Variable is named "toCommend" but its just the account ID so whatever */,
+						serverSteamID: serverSteamID,
+						matchID: matchID
+					});
 				}
+				return;
+			}
 
-				case "error": {
-					console.error("The child has exited due to an error", msg.error);
-					break;
-				}
+			if (msg.type === "error") {
+				console.error("The child has exited due to an error", msg.error);
+				return;
+			}
 
-				case "logging": {
-					console.log("yellow", "[" + msg.username + "] Logging into Steam");
-					break;
-				}
+			if (msg.type === "logging") {
+				console.log("yellow", "[" + msg.username + "] Logging into Steam");
+				return;
+			}
 
-				case "loggedOn": {
-					console.log("cyan", "[" + msg.username + "] Logged onto Steam - GC Time: " + new Date(msg.hello.rtime32_gc_welcome_timestamp * 1000).toLocaleString());
-					break;
-				}
+			if (msg.type === "loggedOn") {
+				console.log("cyan", "[" + msg.username + "] Logged onto Steam - GC Time: " + new Date(msg.hello.rtime32_gc_welcome_timestamp * 1000).toLocaleString());
+				return;
+			}
 
-				case "authError": {
-					if (msg.error.message.startsWith("Received authlist for ticket")) {
-						console.log("red", "[" + msg.username + "] " + msg.error.message);
-					} else {
-						console.log("red", "[" + msg.username + "] Failed to authenticate to anonymous server");
-					}
+			if (msg.type === "authError") {
+				console.log("red", "[" + msg.username + "] Failed to authenticate to target server");
+				res.error.push(msg.error);
+				return;
+			}
 
-					res.error.push(msg.error);
-					break;
-				}
+			if (msg.type === "auth") {
+				console.log("magenta", "[" + msg.username + "] Authenticated with target server with ticket " + msg.crc);
+				return;
+			}
 
-				case "auth": {
-					console.log("magenta", "[" + msg.username + "] Authenticated to anonymous server with ticket " + msg.crc);
-					break;
-				}
+			if (msg.type === "commended" || msg.type === "reported") {
+				await db.run("UPDATE accounts SET lastCommend = " + Date.now() + " WHERE username = \"" + msg.username + "\"").catch(() => { });
 
-				case "commended":
-				case "reported": {
-					await db.run("UPDATE accounts SET lastCommend = ? WHERE username = ?", Date.now(), msg.username).catch(() => { });
-
-					if (msg.response.response_result === 2 && msg.type === "commended") {
-						// Already commended
-						res.error.push(msg.response);
-
-						console.log("red", "[" + msg.username + "] Got response code " + msg.response.response_result + ", already commended target (" + (res.error.length + res.success.length) + "/" + chunk.length + ")");
-
-						await db.run("INSERT INTO commended (username, commended, timestamp) VALUES (?, ?, ?)", msg.username, target, Date.now()).catch(() => { });
-						return;
-					}
-
-					if (msg.response.response_result === 1) {
-						// Success commend
-						res.success.push(msg.response);
-
-						if (msg.type === "commended") {
-							console.log("green", "[" + msg.username + "] Successfully sent a commend with response code " + msg.response.response_result + " - Remaining Commends: " + msg.response.tokens + " (" + (res.error.length + res.success.length) + "/" + chunk.length + ")");
-						} else {
-							console.log("green", "[" + msg.username + "] Successfully sent a report with response code " + msg.response.response_result + " - " + msg.confirmation + " (" + (res.error.length + res.success.length) + "/" + chunk.length + ")");
-						}
-
-						await db.run("INSERT INTO commended (username, commended, timestamp) VALUES (?, ?, ?)", msg.username, target, Date.now()).catch(() => { });
-						return;
-					}
-
-					// Unknown response code
+				if (msg.response.response_result === 2 && msg.type === "commended") {
+					// Already commended
 					res.error.push(msg.response);
 
-					console.log("red", "[" + msg.username + "] " + (config.type.toUpperCase() === "REPORT" ? "Reported" : "Commended") + " but got invalid success code " + msg.response.response_result + " (" + (res.error.length + res.success.length) + "/" + chunk.length + ")");
-					break;
+					console.log("red", "[" + msg.username + "] Got response code " + msg.response.response_result + ", already commended target (" + (res.error.length + res.success.length) + "/" + chunk.length + ")");
+
+					await db.run("INSERT INTO commended (username, commended, timestamp) VALUES (\"" + msg.username + "\", " + toCommend + ", " + Date.now() + ")").catch(() => { });
+					return;
 				}
 
-				case "commendErr":
-				case "reportErr": {
-					res.error.push(msg.error);
+				if (msg.response.response_result === 1) {
+					// Success commend
+					res.success.push(msg.response);
 
-					console.log("red", "[" + msg.username + "] Failed to " + (config.type.toUpperCase() === "REPORT" ? "report" : "commend") + " (" + (res.error.length + res.success.length) + "/" + chunk.length + ")", msg.error);
-
-					await db.run("UPDATE accounts SET lastCommend = ? WHERE username = ?", Date.now(), msg.username).catch(() => { });
-					break;
-				}
-
-				case "halfwayError": {
-					console.log("red", "[" + msg.username + "] Fatal error after logging in and has been marked as invalid (" + (res.error.length + res.success.length) + "/" + chunk.length + ")", msg.error);
-					await db.run("UPDATE accounts SET operational = 0 WHERE username = ?", msg.username);
-					break;
-				}
-
-				case "failLogin": {
-					res.error.push(msg.error);
-
-					let ignoreCodes = [
-						SteamUser.EResult.Fail,
-						SteamUser.EResult.InvalidPassword,
-						SteamUser.EResult.AccessDenied,
-						SteamUser.EResult.Banned,
-						SteamUser.EResult.AccountNotFound,
-						SteamUser.EResult.Suspended,
-						SteamUser.EResult.AccountLockedDown,
-						SteamUser.EResult.IPBanned,
-						SteamUser.EResult.AccountDisabled
-					];
-
-					if (typeof msg.error.eresult === "number" && !ignoreCodes.includes(msg.error.eresult)) {
-						console.log("red", "[" + msg.username + "] Failed to login (" + (res.error.length + res.success.length) + "/" + chunk.length + ")", msg.error);
-					} else if (msg.error && msg.error.message === "Steam Guard required") {
-						console.log("red", "[" + msg.username + "] Requires a Steam Guard code and has been marked as invalid (" + (res.error.length + res.success.length) + "/" + chunk.length + ")", msg.error);
-						await db.run("UPDATE accounts SET operational = 0 WHERE username = ?", msg.username);
-					} else if (msg.error && msg.error.message === "VAC Banned") {
-						console.log("red", "[" + msg.username + "] Has been VAC banned in CSGO and has been marked as invalid (" + (res.error.length + res.success.length) + "/" + chunk.length + ")", msg.error);
-						await db.run("UPDATE accounts SET operational = 0 WHERE username = ?", msg.username);
-					} else if (msg.error && msg.error.message === "Game Banned") {
-						console.log("red", "[" + msg.username + "] Has been Game banned in CSGO and has been marked as invalid (" + (res.error.length + res.success.length) + "/" + chunk.length + ")", msg.error);
-						await db.run("UPDATE accounts SET operational = 0 WHERE username = ?", msg.username);
+					if (msg.type === "commended") {
+						console.log("green", "[" + msg.username + "] Successfully sent a commend with response code " + msg.response.response_result + " - Remaining Commends: " + msg.response.tokens + " (" + (res.error.length + res.success.length) + "/" + chunk.length + ")");
 					} else {
-						// Add more possible errors which occur if proxies are not working correctly
-						if (((typeof msg.error.message === "string" && /^HTTP CONNECT \d+.*$/i.test(msg.error.message)) || ["Failed to log in within given 60000ms", "Proxy connection timed out"].includes(msg.error.message) || ["ETIMEDOUT"].includes(msg.error.code)) && config.proxy.enabled) {
-							console.log("red", "[" + msg.username + "] Failed to login and due to proxy timeout (" + (res.error.length + res.success.length) + "/" + chunk.length + ")", msg.error);
-						} else {
-							console.log("red", "[" + msg.username + "] Failed to login and has been marked as invalid (" + (res.error.length + res.success.length) + "/" + chunk.length + ")", msg.error);
-							await db.run("UPDATE accounts SET operational = 0 WHERE username = ?", msg.username);
-						}
+						console.log("green", "[" + msg.username + "] Successfully sent a report with response code " + msg.response.response_result + " - " + msg.confirmation + " (" + (res.error.length + res.success.length) + "/" + chunk.length + ")");
 					}
-					break;
+
+					await db.run("INSERT INTO commended (username, commended, timestamp) VALUES (\"" + msg.username + "\", " + toCommend + ", " + Date.now() + ")").catch(() => { });
+					return;
 				}
 
-				default: {
-					// This should never happen
-					break;
+				// Unknown response code
+				res.error.push(msg.response);
+
+				console.log("red", "[" + msg.username + "] " + (config.type.toUpperCase() === "REPORT" ? "Reported" : "Commended") + " but got invalid success code " + msg.response.response_result + " (" + (res.error.length + res.success.length) + "/" + chunk.length + ")");
+				return;
+			}
+
+			if (msg.type === "commendErr" || msg.type === "reportErr") {
+				res.error.push(msg.error);
+
+				console.log("red", "[" + msg.username + "] Failed to " + (config.type.toUpperCase() === "REPORT" ? "report" : "commend") + " (" + (res.error.length + res.success.length) + "/" + chunk.length + ")", msg.error);
+
+				await db.run("UPDATE accounts SET lastCommend = " + Date.now() + " WHERE username = \"" + msg.username + "\"").catch(() => { });
+				return;
+			}
+
+			if (msg.type === "halfwayError") {
+				console.log("red", "[" + msg.username + "] Fatal error after logging in and has been marked as invalid (" + (res.error.length + res.success.length) + "/" + chunk.length + ")", msg.error);
+				await db.run("UPDATE accounts SET operational = 0 WHERE \"username\" = \"" + msg.username + "\"");
+				return;
+			}
+
+			if (msg.type === "failLogin") {
+				res.error.push(msg.error);
+
+				let ignoreCodes = [
+					SteamUser.EResult.Fail,
+					SteamUser.EResult.InvalidPassword,
+					SteamUser.EResult.AccessDenied,
+					SteamUser.EResult.Banned,
+					SteamUser.EResult.AccountNotFound,
+					SteamUser.EResult.Suspended,
+					SteamUser.EResult.AccountLockedDown,
+					SteamUser.EResult.IPBanned,
+					SteamUser.EResult.AccountDisabled
+				];
+
+				if (typeof msg.error.eresult === "number" && !ignoreCodes.includes(msg.error.eresult)) {
+					console.log("red", "[" + msg.username + "] Failed to login (" + (res.error.length + res.success.length) + "/" + chunk.length + ")", msg.error);
+				} else if (msg.error && msg.error.message === "Steam Guard required") {
+					console.log("red", "[" + msg.username + "] Requires a Steam Guard code and has been marked as invalid (" + (res.error.length + res.success.length) + "/" + chunk.length + ")", msg.error);
+					await db.run("UPDATE accounts SET operational = 0 WHERE \"username\" = \"" + msg.username + "\"");
+				} else if (msg.error && msg.error.message === "VAC Banned") {
+					console.log("red", "[" + msg.username + "] Has been VAC banned in CSGO and has been marked as invalid (" + (res.error.length + res.success.length) + "/" + chunk.length + ")", msg.error);
+					await db.run("UPDATE accounts SET operational = 0 WHERE \"username\" = \"" + msg.username + "\"");
+				} else if (msg.error && msg.error.message === "Game Banned") {
+					console.log("red", "[" + msg.username + "] Has been Game banned in CSGO and has been marked as invalid (" + (res.error.length + res.success.length) + "/" + chunk.length + ")", msg.error);
+					await db.run("UPDATE accounts SET operational = 0 WHERE \"username\" = \"" + msg.username + "\"");
+				} else {
+					// Add more possible errors which occur if proxies are not working correctly
+					if (((typeof msg.error.message === "string" && /^HTTP CONNECT \d+.*$/i.test(msg.error.message)) || ["Failed to log in within given 60000ms", "Proxy connection timed out"].includes(msg.error.message) || ["ETIMEDOUT"].includes(msg.error.code)) && config.proxy.enabled) {
+						console.log("red", "[" + msg.username + "] Failed to login and due to proxy timeout (" + (res.error.length + res.success.length) + "/" + chunk.length + ")", msg.error);
+					} else {
+						console.log("red", "[" + msg.username + "] Failed to login and has been marked as invalid (" + (res.error.length + res.success.length) + "/" + chunk.length + ")", msg.error);
+						await db.run("UPDATE accounts SET operational = 0 WHERE \"username\" = \"" + msg.username + "\"");
+					}
 				}
+				return;
 			}
 		});
 
