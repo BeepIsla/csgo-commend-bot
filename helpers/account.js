@@ -239,7 +239,7 @@ module.exports = class Account extends Events {
 				this.csgoUser.Protos.steam.EMsg.k_EMsgClientAuthList,
 				{},
 				undefined, // this.csgoUser.Protos.steam.CMsgClientAuthList - (Steam-User automatically encodes this for us)
-							// TODO: Change sendMessage() to make this more consistent
+				// TODO: Change sendMessage() to make this more consistent
 				{
 					tokens_left: this.steamUser._gcTokens.length,
 					last_request_seq: this.steamUser._authSeqMe,
@@ -308,9 +308,10 @@ module.exports = class Account extends Events {
 	 * @param {Boolean|Number} cmd_friendly Do we want to commend as friendly?
 	 * @param {Boolean|Number} cmd_teaching Do we want to commend as teaching?
 	 * @param {Boolean|Number} cmd_leader Do we want to commend as leader?
+	 * @param {Number} timeout Maximum amount of time to wait before rejecting in milliseconds
 	 * @returns {Promise.<Object>}
 	 */
-	commendPlayer(serverID, accountID, matchID, cmd_friendly, cmd_teaching, cmd_leader) {
+	commendPlayer(serverID, accountID, matchID, cmd_friendly, cmd_teaching, cmd_leader, timeout) {
 		return new Promise(async (resolve, reject) => {
 			this.setGamesPlayed(serverID);
 
@@ -345,7 +346,7 @@ module.exports = class Account extends Events {
 				},
 				this.csgoUser.Protos.csgo.ECsgoGCMsg.k_EMsgGCCStrike15_v2_ClientReportResponse,
 				this.csgoUser.Protos.csgo.CMsgGCCStrike15_v2_ClientReportResponse,
-				20000
+				timeout
 			).then(resolve).catch(reject);
 		});
 	}
@@ -360,9 +361,10 @@ module.exports = class Account extends Events {
 	 * @param {Boolean|Number} rpt_speedhack Do we want to report as other hacking?
 	 * @param {Boolean|Number} rpt_teamharm Do we want to report as griefing?
 	 * @param {Boolean|Number} rpt_textabuse Do we want to report as text abusing?
+	 * @param {Number} timeout Maximum amount of time to wait before rejecting in milliseconds
 	 * @returns {Promise.<Object>}
 	 */
-	reportPlayer(serverID, accountID, matchID, rpt_aimbot, rpt_wallhack, rpt_speedhack, rpt_teamharm, rpt_textabuse) {
+	reportPlayer(serverID, accountID, matchID, rpt_aimbot, rpt_wallhack, rpt_speedhack, rpt_teamharm, rpt_textabuse, timeout) {
 		return new Promise(async (resolve, reject) => {
 			this.setGamesPlayed(serverID);
 
@@ -391,7 +393,7 @@ module.exports = class Account extends Events {
 				},
 				this.csgoUser.Protos.csgo.ECsgoGCMsg.k_EMsgGCCStrike15_v2_ClientReportResponse,
 				this.csgoUser.Protos.csgo.CMsgGCCStrike15_v2_ClientReportResponse,
-				20000
+				timeout
 			).then(resolve).catch(reject);
 		});
 	}
@@ -531,6 +533,45 @@ module.exports = class Account extends Events {
 			}).catch((err) => {
 				reject(new Error("Failed to receive Valve CSGO Server information"));
 			});
+		});
+	}
+
+	getCurrentCommendCount(accountID) {
+		return new Promise((resolve, reject) => {
+			if (this.errored) {
+				return;
+			}
+
+			this.csgoUser.sendMessage(
+				730,
+				this.csgoUser.Protos.csgo.ECsgoGCMsg.k_EMsgGCCStrike15_v2_ClientRequestPlayersProfile,
+				{},
+				this.csgoUser.Protos.csgo.CMsgGCCStrike15_v2_ClientRequestPlayersProfile,
+				{
+					account_id: accountID,
+					request_level: 32
+				},
+				this.csgoUser.Protos.csgo.ECsgoGCMsg.k_EMsgGCCStrike15_v2_PlayersProfile,
+				this.csgoUser.Protos.csgo.CMsgGCCStrike15_v2_PlayersProfile,
+				20000
+			).then((data) => {
+				let commends = undefined;
+				if (data.account_profiles && data.account_profiles[0] && data.account_profiles[0].commendation) {
+					commends = data.account_profiles[0].commendation;
+				} else {
+					commends = {
+						cmd_friendly: 0,
+						cmd_teaching: 0,
+						cmd_leader: 0
+					};
+				}
+
+				resolve({
+					friendly: commends.cmd_friendly,
+					teaching: commends.cmd_teaching,
+					leader: commends.cmd_leader
+				});
+			}).catch(reject);
 		});
 	}
 

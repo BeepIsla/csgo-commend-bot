@@ -356,6 +356,24 @@ console.log = (color, ...args) => {
 		}
 	}
 
+	// Get current commend count
+	let startCommends = {
+		friendly: 0,
+		teaching: 0,
+		leader: 0
+	};
+	if (config.showCommends && config.type.toUpperCase() === "COMMEND") {
+		console.log("blue", "Logging into fetcher account for commend count...");
+		let fetcher = new Account(config.fetcher.askSteamGuard);
+		await fetcher.login(config.fetcher.username, config.fetcher.password, config.fetcher.sharedSecret);
+
+		startCommends = await fetcher.getCurrentCommendCount(targetAcc instanceof Target ? targetAcc.accountid : targetAcc);
+		console.log("yellow", "Current target commends: F" + startCommends.friendly + " T" + startCommends.teaching + " L" + startCommends.leader);
+
+		fetcher.logOff();
+	}
+
+	// Start commending
 	for (let i = 0; i < chunks.length; i++) {
 		if (i !== 0 && i % (config.switchServerAfterChunks || Number.MAX_SAFE_INTEGER) === 0 && config.method.toUpperCase() === "LOGIN") {
 			console.log("white", "Getting an available server after " + config.switchServerAfterChunks + " chunk" + (config.switchServerAfterChunks === 1 ? "" : "s"));
@@ -397,6 +415,24 @@ console.log = (color, ...args) => {
 	}
 
 	// We are done here!
+	if (config.showCommends && config.type.toUpperCase() === "COMMEND") {
+		console.log("blue", "Logging into fetcher account for commend count...");
+		let fetcher = new Account(config.fetcher.askSteamGuard);
+		await fetcher.login(config.fetcher.username, config.fetcher.password, config.fetcher.sharedSecret);
+
+		let commends = await fetcher.getCurrentCommendCount(targetAcc instanceof Target ? targetAcc.accountid : targetAcc);
+		console.log("yellow", "Current target commends: F" + commends.friendly + " T" + commends.teaching + " L" + commends.leader);
+
+		let diffCommends = {
+			friendly: commends.friendly - startCommends.friendly,
+			teaching: commends.teaching - startCommends.teaching,
+			leader: commends.leader - startCommends.leader
+		};
+		console.log("yellow", "Change: F" + diffCommends.friendly + " T" + diffCommends.teaching + " L" + diffCommends.leader);
+
+		fetcher.logOff();
+	}
+
 	if (targetAcc instanceof Target) {
 		targetAcc.logOff();
 	}
@@ -428,6 +464,7 @@ function handleChunk(chunk, target, serverSteamID, matchID, preload) {
 					child.send({
 						isCommend: config.type.toUpperCase() === "COMMEND",
 						isReport: config.type.toUpperCase() === "REPORT",
+						isPreload: preload,
 
 						chunk: chunk,
 						target: target,

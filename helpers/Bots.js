@@ -23,6 +23,7 @@ process.on("message", async (msg) => {
 	const isReport = msg.isReport;
 	const isCommend = msg.isCommend;
 	const matchID = msg.matchID;
+	const isPreload = msg.isPreload;
 
 	try {
 		let done = 0;
@@ -88,7 +89,8 @@ process.on("message", async (msg) => {
 						acc.report.rpt_speedhack,
 						acc.report.rpt_teamharm,
 						acc.report.rpt_textabuse
-					])
+					]),
+					isPreload ? 2500 : 20000
 				].flat();
 
 				await a[isCommend ? "commendPlayer" : "reportPlayer"](...args).then((response) => {

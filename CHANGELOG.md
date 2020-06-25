@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.8.1
+- Preloading now waits much shorter before rejecting when commending/reporting
+- Added commend display option
+  - `showCommends` in your `config.json`, set this to `true` to see commends at the start and end of the process, as well as the difference
+  - **Enabling this requires a fetcher account**
+
 ## 2.8.0
 - Re-added ServerID, MatchID and Fetcher
 - Updated all libraries to their latest version
