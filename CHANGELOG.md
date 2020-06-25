@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.8.2
+- Fix database manager
+
 ## 2.8.1
 - Preloading now waits much shorter before rejecting when commending/reporting
 - Added commend display option

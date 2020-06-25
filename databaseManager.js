@@ -1,5 +1,6 @@
 const inquirer = require("inquirer");
 const sqlite = require("sqlite");
+const sqlite3 = require("sqlite3");
 const path = require("path");
 const fs = require("fs");
 const Helper = require("./helpers/Helper.js");
@@ -35,7 +36,7 @@ let helper = null;
 	console.log("Opening database...");
 	let db = await sqlite.open({
 		filename: "./accounts.sqlite",
-		driver: sqlite.Database
+		driver: sqlite3.Database
 	});
 
 	await Promise.all([
