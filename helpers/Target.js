@@ -19,10 +19,9 @@ module.exports = class Target {
 		return this.acc.logOff();
 	}
 
-	setup() {
+	setup(serverID) {
 		return new Promise(async (resolve, reject) => {
-			let sid = this.acc.getAnonymousServerID();
-			this.acc.setGamesPlayed(sid);
+			this.acc.setGamesPlayed(serverID);
 
 			if (previous) {
 				let deauth = await this.acc.unauthenticate().catch(reject);
@@ -31,7 +30,7 @@ module.exports = class Target {
 				}
 			}
 
-			this.acc.authenticate().then((res) => {
+			this.acc.authenticate(serverID).then((res) => {
 				previous = res;
 				resolve(res);
 			}).catch(reject);
