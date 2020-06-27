@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.8.4
+- Fix [#477](https://github.com/BeepIsla/csgo-commend-bot/issues/477)
+
 ## 2.8.3
 - Small display change to how commends are displayed when using `showCommends`
 - Changed preloading to simply commend twice
