@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.8.3
+- Small display change to how commends are displayed when using `showCommends`
+- Changed preloading to simply commend twice
+  - Fixes chunk count being wrong sometimes
+  - Fixes duplicate entries in database
+
 ## 2.8.2
 - Fix database manager
 
