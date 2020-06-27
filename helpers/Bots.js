@@ -23,7 +23,6 @@ process.on("message", async (msg) => {
 	const isReport = msg.isReport;
 	const isCommend = msg.isCommend;
 	const matchID = msg.matchID;
-	const isPreload = msg.isPreload;
 
 	try {
 		let done = 0;
@@ -90,7 +89,7 @@ process.on("message", async (msg) => {
 						acc.report.rpt_teamharm,
 						acc.report.rpt_textabuse
 					]),
-					isPreload ? 2500 : 20000
+					5000
 				].flat();
 
 				await a[isCommend ? "commendPlayer" : "reportPlayer"](...args).then((response) => {
@@ -101,10 +100,20 @@ process.on("message", async (msg) => {
 						confirmation: isReport ? response.confirmation_id.toString() : undefined
 					});
 				}).catch((err) => {
-					process.send({
-						type: isCommend ? "commendErr" : "reportErr",
-						username: a.username,
-						error: serializeError(err)
+					// Failed? Try again! (Still scuffed as fuck)
+					return a[isCommend ? "commendPlayer" : "reportPlayer"](...args).then((response) => {
+						process.send({
+							type: isCommend ? "commended" : "reported",
+							username: a.username,
+							response: response,
+							confirmation: isReport ? response.confirmation_id.toString() : undefined
+						});
+					}).catch((err) => {
+						process.send({
+							type: isCommend ? "commendErr" : "reportErr",
+							username: a.username,
+							error: serializeError(err)
+						});
 					});
 				}).finally(() => {
 					a.removeAllListeners("error");

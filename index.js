@@ -178,7 +178,6 @@ console.log = (color, ...args) => {
 		filename: "./accounts.sqlite",
 		driver: sqlite3.Database
 	});
-	console.log("Opened");
 
 	await Promise.all([
 		db.run("CREATE TABLE IF NOT EXISTS \"accounts\" (\"username\" TEXT NOT NULL UNIQUE, \"password\" TEXT NOT NULL, \"sharedSecret\" TEXT, \"lastCommend\" INTEGER NOT NULL DEFAULT -1, \"operational\" NUMERIC NOT NULL DEFAULT 1, PRIMARY KEY(\"username\"))"),
@@ -398,9 +397,8 @@ console.log = (color, ...args) => {
 
 		console.log("white", "Logging in on chunk " + (i + 1) + "/" + chunks.length);
 
-		// Do commends - Preloading (Why does is this the fix?! Most scuffed fix ever - Someone please rewrite this entire thing this is pain)
-		await handleChunk(chunks[i], (targetAcc instanceof Target ? targetAcc.accountid : targetAcc), serverToUse, matchID, true);
-		let result = await handleChunk(chunks[i], (targetAcc instanceof Target ? targetAcc.accountid : targetAcc), serverToUse, matchID, false);
+		// Do commends
+		let result = await handleChunk(chunks[i], (targetAcc instanceof Target ? targetAcc.accountid : targetAcc), serverToUse, matchID);
 
 		totalSuccess += result.success.length;
 		totalFail += result.error.length;
@@ -428,7 +426,10 @@ console.log = (color, ...args) => {
 			teaching: commends.teaching - startCommends.teaching,
 			leader: commends.leader - startCommends.leader
 		};
-		console.log("yellow", "Change: F" + diffCommends.friendly + " T" + diffCommends.teaching + " L" + diffCommends.leader);
+		console.log("yellow", "Change:");
+		console.log("yellow", "- F " + (diffCommends.friendly >= 0 ? ("+" + diffCommends.friendly) : diffCommends.friendly));
+		console.log("yellow", "- T " + (diffCommends.teaching >= 0 ? ("+" + diffCommends.teaching) : diffCommends.teaching));
+		console.log("yellow", "- L " + (diffCommends.leader >= 0 ? ("+" + diffCommends.leader) : diffCommends.leader));
 
 		fetcher.logOff();
 	}
@@ -444,7 +445,7 @@ console.log = (color, ...args) => {
 	setTimeout(process.exit, 15000, 1).unref();
 })();
 
-function handleChunk(chunk, target, serverSteamID, matchID, preload) {
+function handleChunk(chunk, target, serverSteamID, matchID) {
 	return new Promise(async (resolve, reject) => {
 		let child = ChildProcess.fork("./Bots.js", [], {
 			cwd: path.join(__dirname, "helpers"),
@@ -464,7 +465,6 @@ function handleChunk(chunk, target, serverSteamID, matchID, preload) {
 					child.send({
 						isCommend: config.type.toUpperCase() === "COMMEND",
 						isReport: config.type.toUpperCase() === "REPORT",
-						isPreload: preload,
 
 						chunk: chunk,
 						target: target,
@@ -474,24 +474,27 @@ function handleChunk(chunk, target, serverSteamID, matchID, preload) {
 					break;
 				}
 				case "error": {
-					console.error((preload ? "[PRELOAD] " : "") + "The child has exited due to an error", msg.error);
+					console.error("The child has exited due to an error", msg.error);
 					break;
 				}
 				case "logging": {
-					console.log("yellow", (preload ? "[PRELOAD] " : "") + "[" + msg.username + "] Logging into Steam");
+					console.log("yellow", "[" + msg.username + "] Logging into Steam");
 					break;
 				}
 				case "loggedOn": {
-					console.log("cyan", (preload ? "[PRELOAD] " : "") + "[" + msg.username + "] Logged onto Steam - GC Time: " + new Date(msg.hello.rtime32_gc_welcome_timestamp * 1000).toLocaleString());
+					console.log("cyan", "[" + msg.username + "] Logged onto Steam - GC Time: " + new Date(msg.hello.rtime32_gc_welcome_timestamp * 1000).toLocaleString());
 					break;
 				}
 				case "authError": {
-					console.log("red", (preload ? "[PRELOAD] " : "") + "[" + msg.username + "] Failed to authenticate to target server");
-					res.error.push(msg.error);
+					console.log("red", "[" + msg.username + "] Failed to authenticate to target server");
+					res.error.push({
+						account: msg.username,
+						error: msg.error
+					});
 					break;
 				}
 				case "auth": {
-					console.log("magenta", (preload ? "[PRELOAD] " : "") + "[" + msg.username + "] Authenticated with target server with ticket " + msg.crc);
+					console.log("magenta", "[" + msg.username + "] Authenticated with target server with ticket " + msg.crc);
 					break;
 				}
 				case "commended":
@@ -500,9 +503,12 @@ function handleChunk(chunk, target, serverSteamID, matchID, preload) {
 
 					if (msg.response.response_result === 2 && msg.type === "commended") {
 						// Already commended
-						res.error.push(msg.response);
+						res.error.push({
+							account: msg.username,
+							error: msg.response
+						});
 
-						console.log("red", (preload ? "[PRELOAD] " : "") + "[" + msg.username + "] Got response code " + msg.response.response_result + ", already commended target (" + (res.error.length + res.success.length) + "/" + chunk.length + ")");
+						console.log("red", "[" + msg.username + "] Got response code " + msg.response.response_result + ", already commended target (" + (res.error.length + res.success.length) + "/" + chunk.length + ")");
 
 						await db.run("INSERT INTO commended (username, commended, timestamp) VALUES (?, ?, ?)", msg.username, target, Date.now()).catch(() => { });
 						break;
@@ -510,12 +516,15 @@ function handleChunk(chunk, target, serverSteamID, matchID, preload) {
 
 					if (msg.response.response_result === 1) {
 						// Success commend
-						res.success.push(msg.response);
+						res.success.push({
+							account: msg.username,
+							response: msg.response
+						});
 
 						if (msg.type === "commended") {
-							console.log("green", (preload ? "[PRELOAD] " : "") + "[" + msg.username + "] Successfully sent a commend with response code " + msg.response.response_result + " - Remaining Commends: " + msg.response.tokens + " (" + (res.error.length + res.success.length) + "/" + chunk.length + ")");
+							console.log("green", "[" + msg.username + "] Successfully sent a commend with response code " + msg.response.response_result + " - Remaining Commends: " + msg.response.tokens + " (" + (res.error.length + res.success.length) + "/" + chunk.length + ")");
 						} else {
-							console.log("green", (preload ? "[PRELOAD] " : "") + "[" + msg.username + "] Successfully sent a report with response code " + msg.response.response_result + " - " + msg.confirmation + " (" + (res.error.length + res.success.length) + "/" + chunk.length + ")");
+							console.log("green", "[" + msg.username + "] Successfully sent a report with response code " + msg.response.response_result + " - " + msg.confirmation + " (" + (res.error.length + res.success.length) + "/" + chunk.length + ")");
 						}
 
 						await db.run("INSERT INTO commended (username, commended, timestamp) VALUES (?, ?, ?)", msg.username, target, Date.now()).catch(() => { });
@@ -523,27 +532,36 @@ function handleChunk(chunk, target, serverSteamID, matchID, preload) {
 					}
 
 					// Unknown response code
-					res.error.push(msg.response);
+					res.error.push({
+						account: msg.username,
+						error: msg.response
+					});
 
-					console.log("red", (preload ? "[PRELOAD] " : "") + "[" + msg.username + "] " + (config.type.toUpperCase() === "REPORT" ? "Reported" : "Commended") + " but got invalid success code " + msg.response.response_result + " (" + (res.error.length + res.success.length) + "/" + chunk.length + ")");
+					console.log("red", "[" + msg.username + "] " + (config.type.toUpperCase() === "REPORT" ? "Reported" : "Commended") + " but got invalid success code " + msg.response.response_result + " (" + (res.error.length + res.success.length) + "/" + chunk.length + ")");
 					break;
 				}
 				case "commendErr":
 				case "reportErr": {
-					res.error.push(msg.error);
+					res.error.push({
+						account: msg.username,
+						error: msg.error
+					});
 
-					console.log("red", (preload ? "[PRELOAD] " : "") + "[" + msg.username + "] Failed to " + (config.type.toUpperCase() === "REPORT" ? "report" : "commend") + " (" + (res.error.length + res.success.length) + "/" + chunk.length + ")", msg.error);
+					console.log("red", "[" + msg.username + "] Failed to " + (config.type.toUpperCase() === "REPORT" ? "report" : "commend") + " (" + (res.error.length + res.success.length) + "/" + chunk.length + ")", msg.error);
 
 					await db.run("UPDATE accounts SET lastCommend = ? WHERE username = ?", Date.now(), msg.username).catch(() => { });
 					break;
 				}
 				case "halfwayError": {
-					console.log("red", (preload ? "[PRELOAD] " : "") + "[" + msg.username + "] Fatal error after logging in and has been marked as invalid (" + (res.error.length + res.success.length) + "/" + chunk.length + ")", msg.error);
+					console.log("red", "[" + msg.username + "] Fatal error after logging in and has been marked as invalid (" + (res.error.length + res.success.length) + "/" + chunk.length + ")", msg.error);
 					await db.run("UPDATE accounts SET operational = 0 WHERE username = ?", msg.username);
 					break;
 				}
 				case "failLogin": {
-					res.error.push(msg.error);
+					res.error.push({
+						account: msg.username,
+						error: msg.error
+					});
 
 					let ignoreCodes = [
 						SteamUser.EResult.Fail,
@@ -558,22 +576,22 @@ function handleChunk(chunk, target, serverSteamID, matchID, preload) {
 					];
 
 					if (typeof msg.error.eresult === "number" && !ignoreCodes.includes(msg.error.eresult)) {
-						console.log("red", (preload ? "[PRELOAD] " : "") + "[" + msg.username + "] Failed to login (" + (res.error.length + res.success.length) + "/" + chunk.length + ")", msg.error);
+						console.log("red", "[" + msg.username + "] Failed to login (" + (res.error.length + res.success.length) + "/" + chunk.length + ")", msg.error);
 					} else if (msg.error && msg.error.message === "Steam Guard required") {
-						console.log("red", (preload ? "[PRELOAD] " : "") + "[" + msg.username + "] Requires a Steam Guard code and has been marked as invalid (" + (res.error.length + res.success.length) + "/" + chunk.length + ")", msg.error);
+						console.log("red", "[" + msg.username + "] Requires a Steam Guard code and has been marked as invalid (" + (res.error.length + res.success.length) + "/" + chunk.length + ")", msg.error);
 						await db.run("UPDATE accounts SET operational = 0 WHERE username = ?", msg.username);
 					} else if (msg.error && msg.error.message === "VAC Banned") {
-						console.log("red", (preload ? "[PRELOAD] " : "") + "[" + msg.username + "] Has been VAC banned in CSGO and has been marked as invalid (" + (res.error.length + res.success.length) + "/" + chunk.length + ")", msg.error);
+						console.log("red", "[" + msg.username + "] Has been VAC banned in CSGO and has been marked as invalid (" + (res.error.length + res.success.length) + "/" + chunk.length + ")", msg.error);
 						await db.run("UPDATE accounts SET operational = 0 WHERE username = ?", msg.username);
 					} else if (msg.error && msg.error.message === "Game Banned") {
-						console.log("red", (preload ? "[PRELOAD] " : "") + "[" + msg.username + "] Has been Game banned in CSGO and has been marked as invalid (" + (res.error.length + res.success.length) + "/" + chunk.length + ")", msg.error);
+						console.log("red", "[" + msg.username + "] Has been Game banned in CSGO and has been marked as invalid (" + (res.error.length + res.success.length) + "/" + chunk.length + ")", msg.error);
 						await db.run("UPDATE accounts SET operational = 0 WHERE username = ?", msg.username);
 					} else {
 						// Add more possible errors which occur if proxies are not working correctly
 						if (((typeof msg.error.message === "string" && /^HTTP CONNECT \d+.*$/i.test(msg.error.message)) || ["Failed to log in within given 60000ms", "Proxy connection timed out"].includes(msg.error.message) || ["ETIMEDOUT"].includes(msg.error.code)) && config.proxy.enabled) {
-							console.log("red", (preload ? "[PRELOAD] " : "") + "[" + msg.username + "] Failed to login and due to proxy timeout (" + (res.error.length + res.success.length) + "/" + chunk.length + ")", msg.error);
+							console.log("red", "[" + msg.username + "] Failed to login and due to proxy timeout (" + (res.error.length + res.success.length) + "/" + chunk.length + ")", msg.error);
 						} else {
-							console.log("red", (preload ? "[PRELOAD] " : "") + "[" + msg.username + "] Failed to login and has been marked as invalid (" + (res.error.length + res.success.length) + "/" + chunk.length + ")", msg.error);
+							console.log("red", "[" + msg.username + "] Failed to login and has been marked as invalid (" + (res.error.length + res.success.length) + "/" + chunk.length + ")", msg.error);
 							await db.run("UPDATE accounts SET operational = 0 WHERE username = ?", msg.username);
 						}
 					}
