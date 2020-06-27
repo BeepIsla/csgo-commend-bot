@@ -269,7 +269,7 @@ console.log = (color, ...args) => {
 		serverToUse = (await helper.GetActiveServer()).shift().steamid;
 		console.log("white", "Selected available server " + serverToUse);
 
-		targetAcc.setup(serverToUse);
+		targetAcc.setGamesPlayed(serverToUse);
 	} else if (config.method.toUpperCase() === "SERVER") {
 		console.log("white", "Parsing server input");
 

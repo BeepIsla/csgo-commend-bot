@@ -19,7 +19,7 @@ module.exports = class Target {
 		return this.acc.logOff();
 	}
 
-	setup(serverID) {
+	setGamesPlayed(serverID) {
 		return new Promise(async (resolve, reject) => {
 			this.acc.setGamesPlayed(serverID);
 
