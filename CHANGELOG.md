@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.9.0
+- Potentially fixed commend bot freezing & erroring with "UnhandledPromiseRejection" ([#496](https://github.com/BeepIsla/csgo-commend-bot/issues/496))
+- Added option to remove all accounts from the database without removing commend history ([#491](https://github.com/BeepIsla/csgo-commend-bot/issues/491))
+- Added report bot option to wait until Valve Matchmaking game has ended before reporting ([#499](https://github.com/BeepIsla/csgo-commend-bot/issues/499))
+
 ## 2.8.4
 - Fix [#477](https://github.com/BeepIsla/csgo-commend-bot/issues/477)
 
