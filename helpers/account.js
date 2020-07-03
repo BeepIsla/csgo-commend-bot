@@ -313,7 +313,7 @@ module.exports = class Account extends Events {
 	 */
 	commendPlayer(serverID, accountID, matchID, cmd_friendly, cmd_teaching, cmd_leader, timeout) {
 		return new Promise(async (resolve, reject) => {
-			this.setGamesPlayed(serverID).catch(() => { });
+			this.setGamesPlayed(serverID);
 
 			// Wait for the ServerID to set
 			await new Promise(p => setTimeout(p, 50));
@@ -366,7 +366,7 @@ module.exports = class Account extends Events {
 	 */
 	reportPlayer(serverID, accountID, matchID, rpt_aimbot, rpt_wallhack, rpt_speedhack, rpt_teamharm, rpt_textabuse, timeout) {
 		return new Promise(async (resolve, reject) => {
-			this.setGamesPlayed(serverID).catch(() => { });
+			this.setGamesPlayed(serverID);
 
 			// Wait for the ServerID to set
 			await new Promise(p => setTimeout(p, 50));
