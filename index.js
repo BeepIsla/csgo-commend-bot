@@ -269,7 +269,7 @@ console.log = (color, ...args) => {
 		serverToUse = (await helper.GetActiveServer()).shift().steamid;
 		console.log("white", "Selected available server " + serverToUse);
 
-		targetAcc.setGamesPlayed(serverToUse);
+		targetAcc.setGamesPlayed(serverToUse).catch(() => { });
 	} else if (config.method.toUpperCase() === "SERVER") {
 		console.log("white", "Parsing server input");
 
@@ -392,7 +392,7 @@ console.log = (color, ...args) => {
 				console.log("red", "Failed to fetch new server, continuing with old server " + serverToUse);
 			}
 
-			targetAcc.setGamesPlayed(serverToUse);
+			targetAcc.setGamesPlayed(serverToUse).catch(() => { });
 		}
 
 		console.log("white", "Logging in on chunk " + (i + 1) + "/" + chunks.length);
