@@ -62,12 +62,28 @@ let helper = null;
 				"Remove all not working accounts",
 				"Get last commend target and time",
 				"Set account operational",
+				"Remove all accounts - No history reset",
 				"Reset Database",
 				"Exit"
 			]
 		});
 
 		switch (r.response) {
+			case "Remove all accounts - No history reset": {
+				let confirm = await inquirer.prompt({
+					type: "confirm",
+					name: "confirm",
+					message: "Are you sure you want to remove ALL accounts from the database? Commend history will NOT be removed"
+				});
+
+				if (!confirm.confirm) {
+					break;
+				}
+
+				let data = await db.run("DELETE FROM accounts");
+				console.log("Successfully dropped " + data[0].changes + " account entries");
+				break;
+			}
 			case "Set account operational": {
 				let input = await inquirer.prompt({
 					type: "input",
