@@ -349,8 +349,24 @@ console.log = (color, ...args) => {
 
 			console.log("green", "Found target on " + (serverToUse.isValve ? "Valve" : "Community") + " server " + serverID + " after " + tries + " tr" + (tries === 1 ? "y" : "ies") + " " + (matchID === "0" ? "" : ("(" + matchID + ")")));
 
-			serverToUse = serverID;
+			if (config.autoReportOnMatchEnd && serverToUse.isValve && config.type.toUpperCase() === "REPORT") {
+				console.log("cyan", "Waiting until match is over before reporting...");
+				let inMatch = true;
+				while (inMatch) {
+					inMatch = await fetcher.getTargetQueuedMatch(targetAcc).catch(() => {
+						// This should never error
+						inMatch = true;
+					});
 
+					if (inMatch) {
+						await new Promise(p => setTimeout(p, 500));
+					}
+				}
+
+				console.log("green", "Match has ended, starting report bot...");
+			}
+
+			serverToUse = serverID;
 			fetcher.logOff();
 		}
 	}

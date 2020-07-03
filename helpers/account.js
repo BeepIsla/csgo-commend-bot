@@ -4,6 +4,7 @@ const SteamTotp = require("steam-totp");
 const SteamID = require("steamid");
 const StdLib = require("@doctormckay/stdlib");
 const GameCoordinator = require("./GameCoordinator.js");
+const Helper = require("./Helper.js");
 const VDF = require("./VDF.js");
 
 module.exports = class Account extends Events {
@@ -21,6 +22,7 @@ module.exports = class Account extends Events {
 		this.isTarget = isTarget;
 		this.errored = false;
 		this.gamesPlayedInterval = null;
+		this.helper = new Helper(""); // No API key needed for this single usage
 	}
 
 	_steamErrorHandler(err) {
@@ -571,6 +573,41 @@ module.exports = class Account extends Events {
 					teaching: commends.cmd_teaching,
 					leader: commends.cmd_leader
 				});
+			}).catch(reject);
+		});
+	}
+
+	getTargetQueuedMatch(accountid) {
+		return new Promise(async (resolve, reject) => {
+			if (this.errored) {
+				return;
+			}
+
+			if (!this.version) {
+				this.version = await this.helper.GetCurrentVersion(730).catch(reject);
+				if (!this.version) {
+					// Steam broke
+					return;
+				}
+			}
+
+			this.csgoUser.sendMessage(
+				730,
+				this.csgoUser.Protos.csgo.ECsgoGCMsg.k_EMsgGCCStrike15_v2_MatchmakingStart,
+				{},
+				this.csgoUser.Protos.csgo.CMsgGCCStrike15_v2_MatchmakingStart,
+				{
+					account_ids: [
+						accountid
+					],
+					client_version: this.version
+				},
+				this.csgoUser.Protos.csgo.ECsgoGCMsg.k_EMsgGCCStrike15_v2_MatchmakingGC2ClientUpdate,
+				this.csgoUser.Protos.csgo.CMsgGCCStrike15_v2_MatchmakingGC2ClientUpdate,
+				1000
+			).then((info) => {
+				// This should always respond even when we send invalid data
+				resolve(info.ongoingmatch_account_id_sessions && Array.isArray(info.ongoingmatch_account_id_sessions) && info.ongoingmatch_account_id_sessions.includes(accountid));
 			}).catch(reject);
 		});
 	}
