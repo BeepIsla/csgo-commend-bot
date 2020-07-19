@@ -73,7 +73,7 @@ Explanation of each value:
 - showCommends `Boolean`: Whether or not to print commends at the start and end of commending (**Enabling this requires a fetcher account**)
 - autoReportOnMatchEnd `Boolean`: If enabled and target is on a Valve Matchmaking server wait until the match has ended (**Enabling this requires a fetcher account**)
 - switchServerAfterChunks `Number`: **When using `LOGIN` method** switch server automatically after this many chunks have been processed
-- protocol `String`: Either `Auto`, `TCP`, `WebSocket`, or `WebCompatability` - Specify the connection protocol to use for Steam. Try changing this if you encounter `Method Not Allowed`
+- protocol `String`: Either `Auto`, `TCP`, `WebSocket`, or `WebCompatibility` - Specify the connection protocol to use for Steam. Try changing this if you encounter `Method Not Allowed`
 - steamWebAPIKey `String`: Steam Web API key from [here](https://steamcommunity.com/dev/apikey)
 - disableUpdateCheck `Boolean`: Whether or not to skip update checks
 

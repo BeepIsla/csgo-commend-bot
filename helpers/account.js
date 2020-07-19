@@ -11,7 +11,7 @@ const protocols = {
 	"TCP": 1,
 	"WEBSOCKET": 2,
 
-	"WEBCOMPATABILITY": 2
+	"WEBCOMPATIBILITY": 2
 };
 
 module.exports = class Account extends Events {
@@ -24,7 +24,7 @@ module.exports = class Account extends Events {
 			picsCacheAll: false,
 			httpProxy: proxy,
 			protocol: protocols[String(protocol).toUpperCase()] || 0,
-			webCompatibilityMode: String(protocol).toUpperCase() === "WEBCOMPATABILITY"
+			webCompatibilityMode: String(protocol).toUpperCase() === "WEBCOMPATIBILITY"
 		});
 		this.csgoUser = new GameCoordinator(this.steamUser, 730);
 		this.loginTimeout = null;
