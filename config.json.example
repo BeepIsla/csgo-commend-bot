@@ -40,6 +40,7 @@
 	"showCommends": false,
 	"autoReportOnMatchEnd": false,
 	"switchServerAfterChunks": 5,
+	"protocol": "Auto",
 	"steamWebAPIKey": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
 	"disableUpdateCheck": false
 }

@@ -23,6 +23,7 @@ process.on("message", async (msg) => {
 	const isReport = msg.isReport;
 	const isCommend = msg.isCommend;
 	const matchID = msg.matchID;
+	const protocol = msg.protocol;
 
 	try {
 		let done = 0;
@@ -33,7 +34,7 @@ process.on("message", async (msg) => {
 				username: acc.username
 			});
 
-			const a = new Account(false, acc.proxy);
+			const a = new Account(false, acc.proxy, protocol);
 
 			a.on("error", (err) => {
 				process.send({

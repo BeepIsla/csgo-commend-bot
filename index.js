@@ -197,7 +197,7 @@ console.log = (color, ...args) => {
 
 	if (config.method.toUpperCase() === "LOGIN") {
 		console.log("white", "Logging into target account");
-		targetAcc = new Target();
+		targetAcc = new Target(config.protocol);
 		await targetAcc.login(config.account.username, config.account.password, config.account.sharedSecret);
 	} else if (config.method.toUpperCase() === "SERVER") {
 		console.log("white", "Parsing target account...");
@@ -297,7 +297,7 @@ console.log = (color, ...args) => {
 			let serverID = config.serverID.toUpperCase() === "AUTO" ? null : config.serverID;
 
 			console.log("blue", "Logging into fetcher account...");
-			let fetcher = new Account(config.fetcher.askSteamGuard);
+			let fetcher = new Account(config.fetcher.askSteamGuard, undefined, config.protocol);
 			await fetcher.login(config.fetcher.username, config.fetcher.password, config.fetcher.sharedSecret);
 
 			console.log("blue", "Trying to fetch target " + config.fetcher.maxTries + " time" + (config.fetcher.maxTries === 1 ? "" : "s") + " with a delay of " + config.fetcher.tryDelay + "ms");
@@ -379,7 +379,7 @@ console.log = (color, ...args) => {
 	};
 	if (config.showCommends && config.type.toUpperCase() === "COMMEND") {
 		console.log("blue", "Logging into fetcher account for commend count...");
-		let fetcher = new Account(config.fetcher.askSteamGuard);
+		let fetcher = new Account(config.fetcher.askSteamGuard, undefined, config.protocol);
 		await fetcher.login(config.fetcher.username, config.fetcher.password, config.fetcher.sharedSecret);
 
 		startCommends = await fetcher.getCurrentCommendCount(targetAcc instanceof Target ? targetAcc.accountid : targetAcc);
@@ -431,7 +431,7 @@ console.log = (color, ...args) => {
 	// We are done here!
 	if (config.showCommends && config.type.toUpperCase() === "COMMEND") {
 		console.log("blue", "Logging into fetcher account for commend count...");
-		let fetcher = new Account(config.fetcher.askSteamGuard);
+		let fetcher = new Account(config.fetcher.askSteamGuard, undefined, config.protocol);
 		await fetcher.login(config.fetcher.username, config.fetcher.password, config.fetcher.sharedSecret);
 
 		let commends = await fetcher.getCurrentCommendCount(targetAcc instanceof Target ? targetAcc.accountid : targetAcc);
@@ -481,6 +481,7 @@ function handleChunk(chunk, target, serverSteamID, matchID) {
 					child.send({
 						isCommend: config.type.toUpperCase() === "COMMEND",
 						isReport: config.type.toUpperCase() === "REPORT",
+						protocol: config.protocol,
 
 						chunk: chunk,
 						target: target,

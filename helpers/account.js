@@ -6,16 +6,22 @@ const StdLib = require("@doctormckay/stdlib");
 const GameCoordinator = require("./GameCoordinator.js");
 const Helper = require("./Helper.js");
 const VDF = require("./VDF.js");
+const protocols = {
+	"AUTO": 0,
+	"TCP": 1,
+	"WEBSOCKET": 2
+};
 
 module.exports = class Account extends Events {
-	constructor(isTarget = false, proxy = undefined) {
+	constructor(isTarget = false, proxy = undefined, protocol = undefined) {
 		super();
 
 		this.steamUser = new SteamUser({
 			autoRelogin: false,
 			enablePicsCache: false,
 			picsCacheAll: false,
-			httpProxy: proxy
+			httpProxy: proxy,
+			protocol: protocols[String(protocol).toUpperCase()] || 0
 		});
 		this.csgoUser = new GameCoordinator(this.steamUser, 730);
 		this.loginTimeout = null;

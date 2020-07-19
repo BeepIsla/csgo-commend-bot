@@ -2,8 +2,8 @@ const Account = require("./account.js");
 let previous = null;
 
 module.exports = class Target {
-	constructor() {
-		this.acc = new Account(true);
+	constructor(protocol) {
+		this.acc = new Account(true, undefined, protocol);
 	}
 
 	get accountid() {
