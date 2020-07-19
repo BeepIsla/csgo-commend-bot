@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.10.0
+- Added optional config option `protocol` to force a specific connection protocol ([#537](https://github.com/BeepIsla/csgo-commend-bot/issues/537))
+
 ## 2.9.0
 - Potentially fixed commend bot freezing & erroring with "UnhandledPromiseRejection" ([#496](https://github.com/BeepIsla/csgo-commend-bot/issues/496))
 - Added option to remove all accounts from the database without removing commend history ([#491](https://github.com/BeepIsla/csgo-commend-bot/issues/491))
