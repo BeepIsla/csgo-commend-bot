@@ -9,7 +9,9 @@ const VDF = require("./VDF.js");
 const protocols = {
 	"AUTO": 0,
 	"TCP": 1,
-	"WEBSOCKET": 2
+	"WEBSOCKET": 2,
+
+	"WEBCOMPATABILITY": 2
 };
 
 module.exports = class Account extends Events {
@@ -21,7 +23,8 @@ module.exports = class Account extends Events {
 			enablePicsCache: false,
 			picsCacheAll: false,
 			httpProxy: proxy,
-			protocol: protocols[String(protocol).toUpperCase()] || 0
+			protocol: protocols[String(protocol).toUpperCase()] || 0,
+			webCompatibilityMode: String(protocol).toUpperCase() === "WEBCOMPATABILITY"
 		});
 		this.csgoUser = new GameCoordinator(this.steamUser, 730);
 		this.loginTimeout = null;
