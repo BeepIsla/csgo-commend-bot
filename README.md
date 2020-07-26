@@ -150,6 +150,9 @@ Plain text example:
 
 # Frequently Asked Questions
 
+- I am getting timeout errors
+  - You cannot use this bot on a live Valve Competitive/Wingman match, however it does work at the end of the match when the last round ends. Otherwise just use Community Servers or Valve Casual/Deathmatch/War Games/etc. Offline with bots or local workshop maps do not work.
+
 - Can I get banned for using this?
   - Who knows, maybe, maybe not. Its unlikely but you never know. Valve usually *at most* disables the bot accounts.
 
