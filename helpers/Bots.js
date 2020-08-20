@@ -90,7 +90,7 @@ process.on("message", async (msg) => {
 						acc.report.rpt_teamharm,
 						acc.report.rpt_textabuse
 					]),
-					5000
+					60000
 				].flat();
 
 				await a[isCommend ? "commendPlayer" : "reportPlayer"](...args).then((response) => {
